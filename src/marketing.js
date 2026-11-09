@@ -8,8 +8,14 @@ export const assistantModes = [
 ]
 
 function campaignBudget(prompt, profileBudget) {
-  const match = prompt.match(/\$\s*(\d+(?:[.,]\d+)?)(?!\d)|(\d+(?:[.,]\d+)?)\s*(?:USD|dollar)/i)
-  const amount = match ? Number((match[1] ?? match[2]).replace(',', '.')) : profileBudget
+  const match = prompt.match(/\$\s*(\d+(?:[.,]\d+|\s+\d{3}\b)*)|(\d+(?:[.,]\d+|\s+\d{3}\b)*)\s*(?:USD|dollar)/i)
+  let amount = profileBudget
+  if (match) {
+    const text = (match[1] ?? match[2]).replace(/\s/g, '')
+    const fraction = text.match(/[.,](\d{1,2})$/)
+    const whole = (fraction ? text.slice(0, fraction.index) : text).replace(/[.,]/g, '')
+    amount = Number(whole + (fraction ? '.' + fraction[1] : ''))
+  }
   const daily = match && /kuniga|kunlik|\/\s*kun/i.test(prompt)
   return Math.min(1_000_000, Math.round((daily ? amount : amount / 30) * 100) / 100)
 }
@@ -104,7 +110,7 @@ export function toolOutput(tool, topic, variant, detail, profile) {
   const drafts = {
     seo: variant === 'Audit rejasi'
       ? ['Tekshiruv nishoni: ' + topic, '1. Indekslanish: sitemap, robots.txt va canonical teglarini tekshiring.', '2. Sahifa: yagona H1, meta sarlavha, tavsif va ichki havolalarni ko‘ring.', '3. Mobil tezlik, rasm alt matnlari va aloqa formasini sinang.', '4. Ko‘rinish, bosish va konversiya uchun o‘lchovlarni belgilang.']
-      : ['Asosiy ibora: ' + topic, 'Qo‘shimcha so‘rovlar: ' + topic + ' narxi; ' + topic + ' bo‘yicha maslahat; ' + topic + ' misollari.', 'Meta sarlavha: ' + (topic + ' | ' + brand).slice(0, 60), 'Meta tavsif: ' + (brand + ' bilan ' + topic + ' bo‘yicha yechimlarni ko‘ring. ' + offer + '.').slice(0, 155), 'Maqola rejasi: muammo → yechim → misol → savol-javob → murojaat.'],
+      : ['Asosiy ibora: ' + topic, 'Qo‘shimcha so‘rovlar: ' + topic + ' narxi, ' + topic + ' bo‘yicha maslahat, ' + topic + ' misollari.', 'Meta sarlavha: ' + (topic + ' | ' + brand).slice(0, 60), 'Meta tavsif: ' + (brand + ' bilan ' + topic + ' bo‘yicha yechimlarni ko‘ring. ' + offer + '.').slice(0, 155), 'Maqola rejasi: muammo → yechim → misol → savol-javob → murojaat.'],
     outreach: variant === 'SMS'
       ? [brand + ': ' + topic + '. Qiziqsangiz, shu xabarga javob bering.']
       : [
@@ -128,7 +134,7 @@ export function toolOutput(tool, topic, variant, detail, profile) {
       variant === 'Izoh' ? 'Xohlasangiz, tafsilotlarni shaxsiy xabarda muhokama qilamiz.' : 'Siz bilan keyingi qadamni shu yerda kelishamiz.',
     ],
     creative: variant === 'Banner brifi'
-      ? ['Sarlavha: ' + topic, 'Vizual: mahsulot yoki xizmat natijasini markazga qo‘ying, fon uchun ' + profile.color + ' aksentdan foydalaning.', 'Matn: ' + offer + '.', 'CTA: Batafsil ma’lumot olish. Format: 1080 × 1080.']
+      ? ['Sarlavha: ' + topic, 'Vizual: mahsulot yoki xizmatning asosiy foydasini bitta kadrda ko‘rsating.', 'Matn: ' + offer + '.', 'CTA: Batafsil ma’lumot olish. Format: 1080 × 1080.']
       : ['0–3 soniya · “' + topic + '” orqali e’tiborni jalb qiling.', '3–10 soniya · ' + offer + 'ni jarayon yoki mijoz misolida ko‘rsating.', '10–15 soniya · “' + brand + ' bilan bog‘laning” chaqirig‘i. Vertikal 9:16, subtitrli.'],
   }
   return { id: uid(), tool: tool.id, title: topic, variant, date: dateKey(), lines: drafts[tool.id], ...(tool.id === 'landing' ? { landing } : {}) }
@@ -136,8 +142,12 @@ export function toolOutput(tool, topic, variant, detail, profile) {
 
 export async function copyText(text) {
   if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text)
-    return
+    try {
+      await navigator.clipboard.writeText(text)
+      return
+    } catch {
+      // Try the browser selection API if clipboard permission is unavailable.
+    }
   }
   const field = document.createElement('textarea')
   field.value = text

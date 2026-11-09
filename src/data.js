@@ -1,8 +1,11 @@
-export const aiName = 'Nomu Intellegence'
+import { normalizeConnections } from './integrations.js'
+
+export const brandName = 'Marketlane.ai'
+export const aiName = 'Marketlane AI'
 
 export const pages = [
   { id: 'home', label: 'Bosh sahifa', icon: 'grid' },
-  { id: 'assistant', label: aiName, icon: 'sparkles' },
+  { id: 'assistant', label: 'AI yordamchi', icon: 'sparkles' },
   { id: 'strategies', label: 'Strategiya', icon: 'target' },
   { id: 'content', label: 'Kontent rejasi', icon: 'calendar' },
   { id: 'campaigns', label: 'Kampaniyalar', icon: 'megaphone' },
@@ -17,7 +20,7 @@ export const collections = {
   strategies: { title: 'Strategiya', singular: 'strategiya', newLabel: 'Yangi strategiya', icon: 'target', intro: 'Biznes maqsadlari, auditoriya, reja va KPIlarni bir joyda boshqaring.' },
   content: { title: 'Kontent rejasi', singular: 'kontent', newLabel: 'Yangi kontent', icon: 'calendar', intro: 'G‘oyadan nashrgacha bo‘lgan jarayonni kalendarda rejalashtiring.' },
   campaigns: { title: 'Kampaniyalar', singular: 'kampaniya', newLabel: 'Yangi kampaniya', icon: 'megaphone', intro: 'Reklama qoralamalari, budjet va natijalarni boshqaring.' },
-  leads: { title: 'Leadlar', singular: 'lead', newLabel: 'Yangi lead', icon: 'users', intro: 'Murojaatlarni saqlang va har bir mijozning savdo bosqichini kuzating.' },
+  leads: { title: 'Leadlar', singular: 'lead', newLabel: 'Yangi lead', icon: 'users', intro: 'Murojaatlarni birinchi aloqadan sotuvgacha kuzating.' },
   tasks: { title: 'Vazifalar', singular: 'vazifa', newLabel: 'Yangi vazifa', icon: 'checkSquare', intro: 'Marketing ishlarini rejalashtiring, mas’ul va muddat belgilang.' },
 }
 
@@ -68,14 +71,6 @@ export const adChannels = ['Meta Ads', 'Google Ads', 'TikTok Ads']
 export const contentFormats = ['Post', 'Reels', 'Stories', 'Video', 'Karusel']
 export const sources = [...adChannels, ...channels, 'Landing sahifa', 'Tavsiya', 'Boshqa']
 export const periods = [7, 30, 90]
-export const integrations = [
-  { name: 'Meta Ads', label: 'Facebook va Instagram reklamalari', short: '∞', color: 'blue' },
-  { name: 'Google Ads', label: 'Qidiruv va display reklamalari', short: 'G', color: 'amber' },
-  { name: 'TikTok Ads', label: 'Qisqa video kampaniyalari', short: '♪', color: 'purple' },
-  { name: 'Instagram', label: 'Kontent va nashr rejalari', short: '◎', color: 'purple' },
-  { name: 'Telegram', label: 'Messenjer va aloqa', short: '➤', color: 'blue' },
-  { name: 'Google Analytics', label: 'Sayt tashriflari va konversiya', short: '▥', color: 'amber' },
-]
 
 export const monthNames = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr']
 
@@ -131,13 +126,13 @@ export function initialWorkspace() {
 
   return {
     profile: {
-      name: 'NOMU Studio', owner: 'Admin', industry: 'Marketing agentligi',
+      name: 'Marketlane Studio', owner: 'Admin', industry: 'Marketing agentligi',
       offer: 'Strategiya, reklama va kontent xizmatlari',
       audience: 'Toshkentdagi kichik va o‘rta biznes egalari',
       objective: 'Sifatli murojaatlarni ko‘paytirish',
-      voice: 'Samimiy, lo‘nda va professional', website: '', budget: 1500, color: '#00f7a9',
+      voice: 'Samimiy, lo‘nda va professional', website: '', budget: 1500,
     },
-    theme: 'light',
+    theme: 'dark',
     campaigns,
     strategies: [
       { id: 's1', title: '30 kunlik o‘sish strategiyasi', objective: 'Malakali murojaatlarni 20% ko‘paytirish', audience: 'Toshkentdagi xizmat ko‘rsatish bizneslari', kpi: '100 ta yangi lead', budget: 1500, status: 'active', date: dateKey(21), notes: '1. Auditoriyani segmentlash va taklifni aniqlash.\n2. Instagram’da mijoz natijalari bilan tanishtirish.\n3. Meta Ads’da ikki kreativni solishtirish.\n4. Har hafta CPL va malakali lead ulushini ko‘rib chiqish.' },
@@ -162,7 +157,7 @@ export function initialWorkspace() {
     ],
     messages: [],
     savedTools: [],
-    connections: ['Meta Ads', 'Instagram'],
+    connections: normalizeConnections(['Meta Ads', 'Instagram']),
     notifications: [{ id: 'n1', text: 'Demo ish maydoningiz tayyor.', date: dateKey(), read: false }],
   }
 }

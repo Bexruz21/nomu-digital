@@ -6,10 +6,10 @@ import Icon from './Icon.vue'
 const props = defineProps({ report: { type: Object, required: true } })
 const ratio = (row) => row.spend ? row.revenue / row.spend : 0
 const specs = [
-  { key: 'reach', label: 'Qamrov', icon: 'eye', color: 'green', format: compact },
-  { key: 'leads', label: 'Yangi leadlar', icon: 'users', color: 'blue', format: number },
-  { key: 'spend', label: 'Reklama xarajati', icon: 'wallet', color: 'purple', format: money },
-  { key: 'roas', label: 'ROAS', icon: 'trend', color: 'amber', format: (value) => number(value, 1) + '×' },
+  { key: 'reach', label: 'Qamrov', icon: 'eye', color: 'blue', format: compact },
+  { key: 'leads', label: 'Yangi leadlar', icon: 'users', color: 'purple', format: number },
+  { key: 'spend', label: 'Reklama xarajati', icon: 'wallet', color: 'pink', format: money },
+  { key: 'roas', label: 'ROAS', icon: 'trend', color: 'green', format: (value) => number(value, 1) + '×' },
 ]
 const metrics = computed(() => specs.map((item) => {
   const value = (row) => item.key === 'roas' ? ratio(row) : row[item.key]

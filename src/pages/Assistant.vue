@@ -51,7 +51,7 @@ async function copy(reply) {
     <div class="assistant-layout">
       <section class="glass assistant-card">
         <div class="assistant-top">
-          <span class="icon-tile tone-green"><Icon name="sparkles" :size="20" /></span>
+          <span class="icon-tile tone-purple"><Icon name="sparkles" :size="20" /></span>
           <div><strong>Marketing yordamchisi</strong><small>Biznes profilingiz asosida</small></div>
           <span class="status-chip tone-green"><i></i> Demo AI</span>
         </div>
@@ -69,7 +69,7 @@ async function copy(reply) {
           <article v-for="reply in messages" :key="reply.id" class="assistant-exchange">
             <p class="user-prompt">{{ reply.prompt }}</p>
             <div class="reply">
-              <div class="reply-title"><span class="icon-tile tone-green"><Icon name="sparkles" :size="16" /></span><strong>{{ reply.title }}</strong></div>
+              <div class="reply-title"><span class="icon-tile tone-purple"><Icon name="sparkles" :size="16" /></span><strong>{{ reply.title }}</strong></div>
               <p>{{ reply.intro }}</p>
               <section v-for="block in reply.blocks" :key="block.title" class="reply-block">
                 <h3><Icon :name="block.icon" :size="17" />{{ block.title }}</h3>

@@ -10,6 +10,7 @@ const props = defineProps({
   profile: { type: Object, required: true },
   campaigns: { type: Array, default: () => [] },
   defaultDate: String,
+  defaultStatus: String,
 })
 const emit = defineEmits(['save', 'delete', 'close', 'advance', 'revise', 'result'])
 const kind = props.kind
@@ -17,7 +18,7 @@ const defaults = {
   strategies: { objective: '', audience: props.profile.audience, kpi: '', budget: props.profile.budget, status: 'draft' },
   content: { channel: 'Instagram', format: 'Post', time: '12:00', status: 'draft' },
   campaigns: { channel: 'Meta Ads', goal: 'Lead yig‘ish', budget: 25, status: 'draft', results: [] },
-  leads: { email: '', phone: '', source: 'Boshqa', campaignId: '', status: 'new' },
+  leads: { email: '', phone: '', source: 'Boshqa', campaignId: '', status: allowedStatuses.leads.includes(props.defaultStatus) ? props.defaultStatus : 'new' },
   tasks: { owner: props.profile.owner, priority: 'O‘rta', status: 'todo' },
 }
 const initial = { title: '', date: props.defaultDate || dateKey(), notes: '', ...defaults[kind], ...props.record }
@@ -101,7 +102,7 @@ function selectCampaign() {
     <div class="form-grid">
       <label class="field"><span>{{ kind === 'tasks' || kind === 'strategies' ? 'Muddat' : 'Sana' }}</span><input v-model="draft.date" type="date" required /></label>
       <label v-if="kind === 'content'" class="field"><span>Vaqt</span><input v-model="draft.time" type="time" required /></label>
-      <label v-if="!workflow[kind]" class="field"><span>Holat</span><select v-model="draft.status"><option v-for="status in allowedStatuses[kind]" :key="status" :value="status">{{ statuses[status].label }}</option></select></label>
+      <label v-if="!workflow[kind]" class="field"><span>Holat</span><select v-model="draft.status" aria-label="Holat"><option v-for="status in allowedStatuses[kind]" :key="status" :value="status">{{ statuses[status].label }}</option></select></label>
     </div>
     <label class="field"><span>{{ notesLabel }}</span><textarea v-model.trim="draft.notes" rows="4" maxlength="4000" placeholder="Tafsilotlarni yozing…"></textarea></label>
     <p v-if="error" class="field-error" role="alert">{{ error }}</p>

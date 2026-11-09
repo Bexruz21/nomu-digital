@@ -15,7 +15,7 @@ const cpl = (row) => row.leads ? row.spend / row.leads : null
 const roas = (row) => row.spend ? row.revenue / row.spend : null
 
 function exportReport() {
-  downloadCsv('nomu-hisobot-' + props.days + '-kun.csv', [
+  downloadCsv('marketlane-hisobot-' + props.days + '-kun.csv', [
     ['Kanal', 'Davr boshi', 'Davr oxiri', 'Qamrov', 'Leadlar', 'Xarajat (USD)', 'Daromad (USD)', 'CPL (USD)', 'ROAS'],
     ...[...report.value.byChannel, { channel: 'Jami', ...report.value.total }].map((row) => [
       row.channel, dateKey(1 - props.days), dateKey(), row.reach, row.leads, Number(row.spend.toFixed(2)), Number(row.revenue.toFixed(2)),

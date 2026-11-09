@@ -60,8 +60,8 @@ function move(event) {
       <svg :viewBox="'0 0 ' + width + ' ' + height" class="trend-chart" role="group" aria-label="Davrlar bo‘yicha marketing natijalari" @pointermove="move">
         <defs>
           <linearGradient :id="gradient" x1="0" x2="0" y1="0" y2="1" gradientUnits="objectBoundingBox">
-            <stop offset="0%" stop-color="#00c886" stop-opacity=".28" />
-            <stop offset="100%" stop-color="#00c886" stop-opacity=".01" />
+            <stop offset="0%" stop-color="var(--chart-color)" stop-opacity=".32" />
+            <stop offset="100%" stop-color="var(--chart-color)" stop-opacity=".015" />
           </linearGradient>
         </defs>
         <g v-for="tick in plot.ticks" :key="tick.y">

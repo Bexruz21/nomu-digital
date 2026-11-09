@@ -10,7 +10,7 @@ import TrendChart from '../components/TrendChart.vue'
 const props = defineProps({ state: Object, days: Number, approvals: Array })
 const emit = defineEmits(['navigate', 'create', 'edit', 'period', 'approvals'])
 const report = computed(() => performance(props.state.campaigns, props.days))
-const art = import.meta.env.BASE_URL + 'nomu-glass.png'
+const art = import.meta.env.BASE_URL + 'marketlane-orbit.png'
 </script>
 
 <template>
@@ -32,9 +32,9 @@ const art = import.meta.env.BASE_URL + 'nomu-glass.png'
       <div class="hero-grid"></div>
       <div class="hero-content">
         <span class="hero-tag"><Icon name="sparkles" :size="15" />{{ aiName.toUpperCase() }}</span>
-        <h2>Marketingingizga<br />yangi yo‘nalish.</h2>
-        <p>Maqsadni ayting. Strategiya, kontent va reklama<br class="desktop-br" /> rejasini birgalikda tayyorlaymiz.</p>
-        <button class="button hero-button" @click="emit('navigate', 'assistant')">Yordamchini ochish<Icon name="arrowUpRight" :size="17" /></button>
+        <h2>Marketingingiz<br /><em>bitta platformada.</em></h2>
+        <p>Maqsadingizni yozing va strategiya, kontent<br class="desktop-br" /> hamda reklama rejasini tayyorlang.</p>
+        <button class="button hero-button" @click="emit('navigate', 'assistant')">AI yordamchini ochish<Icon name="arrowUpRight" :size="17" /></button>
       </div>
       <div class="hero-index" aria-hidden="true"><span></span> MAQSADDAN NATIJAGACHA</div>
     </section>

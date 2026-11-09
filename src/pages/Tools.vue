@@ -23,6 +23,8 @@ function choose(id) {
   detail.value = ''
   variant.value = tool.value.variants[0]
   result.value = null
+  contactName.value = ''
+  contactEmail.value = ''
   captured.value = false
 }
 
@@ -73,9 +75,9 @@ function captureLead() {
       <section class="glass tool-form">
         <div class="section-head"><div><h2>{{ tool.title }}</h2><p>{{ tool.summary }}</p></div><span class="icon-tile" :class="'tone-' + tool.color"><Icon :name="tool.icon" :size="19" /></span></div>
         <form class="record-form" @submit.prevent="generate">
-          <label class="field"><span>{{ tool.field }}</span><input v-model.trim="topic" required maxlength="140" :placeholder="tool.example" /></label>
+          <label class="field"><span>{{ tool.field }}</span><input v-model.trim="topic" required maxlength="140" :placeholder="tool.id === 'seo' && state.profile.website ? state.profile.website : tool.example" /></label>
           <label class="field"><span>Variant</span><select v-model="variant"><option v-for="option in tool.variants" :key="option">{{ option }}</option></select></label>
-          <label class="field"><span>Auditoriya (ixtiyoriy)</span><input v-model.trim="detail" maxlength="220" :placeholder="state.profile.audience" /></label>
+          <label v-if="['landing', 'brand'].includes(tool.id)" class="field"><span>Auditoriya (ixtiyoriy)</span><input v-model.trim="detail" maxlength="220" :placeholder="state.profile.audience" /></label>
           <button type="submit" class="button button-primary"><Icon name="sparkles" :size="17" />Qoralama tayyorlash</button>
         </form>
         <div v-if="state.savedTools.length" class="saved-tools">
@@ -88,7 +90,7 @@ function captureLead() {
       <section class="glass tool-output">
         <div class="section-head"><div><h2>Natija</h2><p>{{ result ? result.variant : 'Qoralamani shu yerda ko‘rasiz' }}</p></div><span class="status-chip tone-neutral"><i></i> Demo</span></div>
         <template v-if="result">
-          <div v-if="result.landing" class="landing-preview" :style="{ '--preview-accent': state.profile.color }">
+          <div v-if="result.landing" class="landing-preview">
             <span class="eyebrow">LANDING · JONLI MAHALLIY MAKET</span>
             <h3>{{ result.landing.heading }}</h3>
             <p>{{ result.landing.tagline }}</p>

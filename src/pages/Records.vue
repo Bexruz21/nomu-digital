@@ -1,11 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { allowedStatuses, collections, dateKey, dateLabel, downloadCsv, money, monthNames, number, statuses, sumResults } from '../data.js'
+import { allowedStatuses, collections, dateKey, dateLabel, money, monthNames, number, statuses, sumResults } from '../data.js'
 import Icon from '../components/Icon.vue'
 import Status from '../components/Status.vue'
 
 const props = defineProps({ kind: String, state: Object })
-const emit = defineEmits(['create', 'edit', 'status', 'navigate', 'notify'])
+const emit = defineEmits(['create', 'edit', 'status', 'navigate'])
 const query = ref('')
 const filter = ref('all')
 const view = ref('list')
@@ -18,7 +18,7 @@ const visible = computed(() => {
   const q = query.value.trim().toLocaleLowerCase()
   return rows.value.filter((row) => (
     (filter.value === 'all' || row.status === filter.value) &&
-    [row.title, row.notes, row.channel, row.source, row.email, row.phone, row.owner, row.objective].some((value) => String(value ?? '').toLocaleLowerCase().includes(q))
+    [row.title, row.notes, row.channel, row.owner, row.objective].some((value) => String(value ?? '').toLocaleLowerCase().includes(q))
   )).map((row) => kind === 'campaigns' ? { ...row, metrics: sumResults(row.results) } : row)
 })
 const highlight = computed(() => {
@@ -26,7 +26,6 @@ const highlight = computed(() => {
     strategies: [['active', 'Faol strategiyalar'], ['draft', 'Qoralamalar'], ['done', 'Bajarildi']],
     content: [['draft', 'Qoralamalar'], ['review', 'Tasdiq navbati'], ['scheduled', 'Rejalangan']],
     campaigns: [['active', 'Faol kampaniyalar'], ['review', 'Tasdiq navbati'], ['paused', 'Pauzada']],
-    leads: [['new', 'Yangi leadlar'], ['qualified', 'Saralangan'], ['won', 'Sotuvlar']],
     tasks: [['todo', 'Ochiq vazifalar'], ['progress', 'Jarayonda'], ['done', 'Bajarilgan']],
   }[kind]
   return counts.map(([status, label]) => ({ status, label, count: rows.value.filter((row) => row.status === status).length }))
@@ -52,13 +51,6 @@ function moveMonth(offset) {
   month.value = new Date(month.value.getFullYear(), month.value.getMonth() + offset, 1)
 }
 
-function exportLeads() {
-  downloadCsv('nomu-leadlar.csv', [
-    ['Ism', 'Email', 'Telefon', 'Manba', 'Kampaniya', 'Holat', 'Sana', 'Izoh'],
-    ...visible.value.map((row) => [row.title, row.email, row.phone, row.source, props.state.campaigns.find((campaign) => campaign.id === row.campaignId)?.title, statuses[row.status].label, row.date, row.notes]),
-  ])
-  emit('notify', 'Leadlar CSV faylga chiqarildi.')
-}
 </script>
 
 <template>
@@ -66,7 +58,6 @@ function exportLeads() {
     <header class="page-heading">
       <div><div class="eyebrow"><i></i> {{ kind === 'tasks' ? 'BOSHQARUV' : 'ISH MAYDONI' }}</div><h1>{{ config.title }}</h1><p>{{ config.intro }}</p></div>
       <div class="heading-actions">
-        <button v-if="kind === 'leads'" class="button button-secondary" :disabled="!visible.length" @click="exportLeads"><Icon name="download" :size="17" />CSV</button>
         <button v-if="kind === 'strategies'" class="button button-secondary" @click="emit('navigate', 'assistant')"><Icon name="sparkles" :size="17" />AI bilan rejalash</button>
         <button class="button button-primary" @click="emit('create', kind)"><Icon name="plus" :size="18" />{{ config.newLabel }}</button>
       </div>
@@ -135,10 +126,9 @@ function exportLeads() {
       <div v-else class="table-scroll">
         <table class="record-table">
           <thead><tr>
-            <th>{{ kind === 'leads' ? 'Ism' : 'Nomi' }}</th>
+            <th>Nomi</th>
             <template v-if="kind === 'content'"><th>Kanal</th><th>Format</th><th>Vaqt</th></template>
             <template v-if="kind === 'campaigns'"><th>Kanal</th><th>Kunlik budjet</th><th>Leadlar</th><th>ROAS</th></template>
-            <template v-if="kind === 'leads'"><th>Aloqa</th><th>Manba</th><th>Sana</th></template>
             <template v-if="kind === 'tasks'"><th>Mas’ul</th><th>Ustuvorlik</th><th>Muddat</th></template>
             <th>Holat</th><th><span class="sr-only">Ochish</span></th>
           </tr></thead>
@@ -146,20 +136,13 @@ function exportLeads() {
             <td>
               <div class="table-title-group">
                 <input v-if="kind === 'tasks'" class="task-check" type="checkbox" :checked="row.status === 'done'" :aria-label="row.title + ' bajarildi'" @change="emit('status', kind, row.id, $event.target.checked ? 'done' : 'todo')" />
-                <span v-if="kind === 'leads'" class="lead-avatar">{{ row.title.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() }}</span>
                 <button class="table-name" :class="{ 'task-done': kind === 'tasks' && row.status === 'done' }" @click="emit('edit', kind, row.id)">{{ row.title }}</button>
               </div>
             </td>
             <template v-if="kind === 'content'"><td>{{ row.channel }}</td><td>{{ row.format }}</td><td>{{ dateLabel(row.date) }} · {{ row.time }}</td></template>
             <template v-if="kind === 'campaigns'"><td>{{ row.channel }}</td><td>{{ money(row.budget, 2) }}</td><td>{{ number(row.metrics.leads) }}</td><td>{{ row.metrics.spend ? number(row.metrics.revenue / row.metrics.spend, 2) + '×' : '—' }}</td></template>
-            <template v-if="kind === 'leads'"><td>{{ row.email || row.phone || '—' }}</td><td>{{ row.source }}</td><td>{{ dateLabel(row.date) }}</td></template>
             <template v-if="kind === 'tasks'"><td>{{ row.owner }}</td><td>{{ row.priority }}</td><td>{{ dateLabel(row.date) }}</td></template>
-            <td v-if="kind === 'leads'">
-              <select class="status-select" :class="'tone-' + statuses[row.status].color" :value="row.status" :aria-label="row.title + ' holati'" @change="emit('status', kind, row.id, $event.target.value)">
-                <option v-for="status in filters" :key="status" :value="status">{{ statuses[status].label }}</option>
-              </select>
-            </td>
-            <td v-else><Status :value="row.status" /></td>
+            <td><Status :value="row.status" /></td>
             <td><button class="icon-button ghost" :aria-label="row.title + 'ni ochish'" @click="emit('edit', kind, row.id)"><Icon name="chevronRight" :size="18" /></button></td>
           </tr></tbody>
         </table>

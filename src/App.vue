@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
-import { allowedStatuses, collections, dateKey, dateLabel, initialWorkspace, pages, periods, statuses, uid, workflow } from './data.js'
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { aiName, allowedStatuses, brandName, collections, dateKey, dateLabel, initialWorkspace, pages, periods, statuses, uid, workflow } from './data.js'
+import { createDemoConnection, integrationProviders, normalizeConnections } from './integrations.js'
 import { assistantModes, createProposal } from './marketing.js'
 import Brand from './components/Brand.vue'
 import Dialog from './components/Dialog.vue'
@@ -10,13 +11,19 @@ import Status from './components/Status.vue'
 import Analytics from './pages/Analytics.vue'
 import Assistant from './pages/Assistant.vue'
 import Dashboard from './pages/Dashboard.vue'
+import Leads from './pages/Leads.vue'
 import Login from './pages/Login.vue'
 import Records from './pages/Records.vue'
 import Settings from './pages/Settings.vue'
 import Tools from './pages/Tools.vue'
 
-const workspaceKey = 'nomu-workspace-v1'
-const sessionKey = 'nomu-session-v1'
+const workspaceKey = 'marketlane-workspace-v1'
+const sessionKey = 'marketlane-session-v1'
+const sidebarKey = 'marketlane-sidebar-width-v1'
+const sidebarMin = 72
+const sidebarExpandedMin = 184
+const sidebarMax = 336
+const sidebarDefault = 244
 const seed = initialWorkspace()
 
 function read(key) {
@@ -38,9 +45,18 @@ function write(key, value) {
 
 function loadWorkspace() {
   try {
-    const saved = JSON.parse(read(workspaceKey))
+    const current = read(workspaceKey)
+    const saved = JSON.parse(current ?? read('nomu-workspace-v1'))
     if (!saved || typeof saved !== 'object') return null
-    return { ...seed, ...saved, profile: { ...seed.profile, ...saved.profile } }
+    const workspace = { ...seed, ...saved, profile: { ...seed.profile, ...saved.profile } }
+    delete workspace.profile.color
+    workspace.connections = normalizeConnections(workspace.connections)
+    if (current === null) {
+      workspace.theme = seed.theme
+      if (workspace.profile.name === 'NOMU Studio') workspace.profile.name = seed.profile.name
+      write(workspaceKey, JSON.stringify(workspace))
+    }
+    return workspace
   } catch {
     return null
   }
@@ -52,17 +68,29 @@ function hashPage() {
 }
 
 const state = shallowRef(loadWorkspace() || seed)
-const signedIn = ref(read(sessionKey) === 'demo-admin')
+const savedSession = read(sessionKey)
+const signedIn = ref((savedSession ?? read('nomu-session-v1')) === 'demo-admin')
+if (savedSession === null && signedIn.value) write(sessionKey, 'demo-admin')
 const page = ref(hashPage())
 const days = ref(30)
 const settingsTab = ref('profile')
 const menuOpen = ref(false)
+const menuTrigger = ref(null)
+const menuDismiss = ref(null)
+const profileOpen = ref(false)
+const profileAnchor = ref(null)
+const profileTrigger = ref(null)
+const sidebarWidth = ref(settledSidebarWidth(Number(read(sidebarKey)) || sidebarDefault))
+const sidebarCompact = computed(() => sidebarWidth.value < sidebarExpandedMin)
+const resizing = ref(false)
 const modal = ref(null)
 const search = ref('')
 const toast = ref('')
 const resultDraft = ref(null)
 let toastTimer
 let persisted = true
+let sidebarDrag
+let expandedWidth = sidebarCompact.value ? sidebarDefault : sidebarWidth.value
 
 const sidebarGroups = [
   { title: 'ISH MAYDONI', items: pages.filter((item) => !item.management) },
@@ -90,8 +118,84 @@ const searchResults = computed(() => {
 
 watch(() => state.value.theme, (theme) => {
   document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light'
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#0f1a16' : '#f4f7f5')
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#090b1b' : '#f4f3fc')
 }, { immediate: true })
+
+function clampSidebarWidth(width) {
+  return Math.min(sidebarMax, Math.max(sidebarMin, Math.round(width)))
+}
+
+function settledSidebarWidth(width) {
+  const clamped = clampSidebarWidth(width)
+  return clamped < sidebarExpandedMin ? sidebarMin : clamped
+}
+
+function saveSidebarWidth(width) {
+  sidebarWidth.value = settledSidebarWidth(width)
+  if (!sidebarCompact.value) expandedWidth = sidebarWidth.value
+  write(sidebarKey, String(sidebarWidth.value))
+}
+
+function toggleSidebarWidth() {
+  saveSidebarWidth(sidebarCompact.value ? expandedWidth : sidebarMin)
+}
+
+function startSidebarResize(event) {
+  if (event.button !== 0 || sidebarDrag) return
+  event.preventDefault()
+  event.currentTarget.focus({ preventScroll: true })
+  event.currentTarget.setPointerCapture(event.pointerId)
+  sidebarDrag = { pointer: event.pointerId, x: event.clientX, width: sidebarWidth.value }
+  resizing.value = true
+}
+
+function moveSidebarResize(event) {
+  if (sidebarDrag?.pointer !== event.pointerId) return
+  sidebarWidth.value = clampSidebarWidth(sidebarDrag.width + event.clientX - sidebarDrag.x)
+}
+
+function finishSidebarResize(event) {
+  if (sidebarDrag?.pointer !== event.pointerId) return
+  sidebarDrag = null
+  resizing.value = false
+  saveSidebarWidth(sidebarWidth.value)
+}
+
+function resizeSidebarWithKeyboard(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    toggleSidebarWidth()
+    return
+  }
+  const target = {
+    ArrowLeft: sidebarWidth.value - 16,
+    ArrowRight: sidebarCompact.value ? sidebarExpandedMin : sidebarWidth.value + 16,
+    Home: sidebarMin, End: sidebarMax,
+  }[event.key]
+  if (target === undefined) return
+  event.preventDefault()
+  saveSidebarWidth(target)
+}
+
+function dismissProfileOutside(event) {
+  if (profileOpen.value && !profileAnchor.value?.contains(event.target)) profileOpen.value = false
+}
+
+function closeMenu() {
+  if (!menuOpen.value) return
+  menuOpen.value = false
+  menuTrigger.value?.focus({ preventScroll: true })
+}
+
+async function toggleMenu() {
+  if (menuOpen.value) {
+    closeMenu()
+    return
+  }
+  menuOpen.value = true
+  await nextTick()
+  menuDismiss.value?.focus({ preventScroll: true })
+}
 
 function notify(message) {
   clearTimeout(toastTimer)
@@ -115,14 +219,15 @@ function addNotification(next, message) {
   next.notifications = [{ id: uid(), text: message, date: dateKey(), read: false }, ...next.notifications].slice(0, 30)
 }
 
-function navigate(id, tab = 'profile') {
+function navigate(id) {
   if (!pages.some((item) => item.id === id)) return
-  if (id === 'settings') settingsTab.value = tab
+  if (id === 'settings') settingsTab.value = 'profile'
   const changed = page.value !== id
   page.value = id
   if (location.hash !== '#' + id) location.hash = id
   modal.value = null
-  menuOpen.value = false
+  profileOpen.value = false
+  closeMenu()
   if (changed) window.scrollTo({ top: 0 })
 }
 
@@ -131,7 +236,8 @@ function syncRoute() {
   if (id === page.value) return
   page.value = id
   modal.value = null
-  menuOpen.value = false
+  profileOpen.value = false
+  closeMenu()
   window.scrollTo({ top: 0 })
 }
 
@@ -145,6 +251,7 @@ function login() {
 function logout() {
   write(sessionKey, '')
   modal.value = null
+  profileOpen.value = false
   menuOpen.value = false
   signedIn.value = false
   toast.value = ''
@@ -157,14 +264,18 @@ function syncStorage(event) {
   if (event.key === workspaceKey && persisted) state.value = loadWorkspace() || seed
   if (event.key === sessionKey) {
     signedIn.value = read(sessionKey) === 'demo-admin'
-    if (!signedIn.value) modal.value = null
+    if (!signedIn.value) {
+      modal.value = null
+      profileOpen.value = false
+    }
   }
 }
 
 function openSearch() {
   search.value = ''
   modal.value = { type: 'search' }
-  menuOpen.value = false
+  profileOpen.value = false
+  closeMenu()
 }
 
 function hotkeys(event) {
@@ -173,19 +284,29 @@ function hotkeys(event) {
     event.preventDefault()
     openSearch()
   }
-  if (event.key === 'Escape' && !modal.value) menuOpen.value = false
+  if (event.key !== 'Escape' || modal.value) return
+  if (profileOpen.value) {
+    profileOpen.value = false
+    profileTrigger.value?.focus({ preventScroll: true })
+  } else {
+    closeMenu()
+  }
 }
 
 onMounted(() => {
   window.addEventListener('hashchange', syncRoute)
   window.addEventListener('storage', syncStorage)
   window.addEventListener('keydown', hotkeys)
+  document.addEventListener('pointerdown', dismissProfileOutside)
+  document.addEventListener('focusin', dismissProfileOutside)
 })
 onUnmounted(() => {
   clearTimeout(toastTimer)
   window.removeEventListener('hashchange', syncRoute)
   window.removeEventListener('storage', syncStorage)
   window.removeEventListener('keydown', hotkeys)
+  document.removeEventListener('pointerdown', dismissProfileOutside)
+  document.removeEventListener('focusin', dismissProfileOutside)
 })
 
 function selectResult(item) {
@@ -200,6 +321,10 @@ function selectResult(item) {
 
 function createRecord(kind, date) {
   modal.value = { type: 'record', kind, date }
+}
+
+function createLead(status = 'new') {
+  modal.value = { type: 'record', kind: 'leads', status }
 }
 
 function editRecord(kind, id) {
@@ -219,6 +344,9 @@ function saveRecord(fields) {
     if (kind === 'campaigns') {
       item.results = previous?.results || []
       if (item.results.length) item.channel = previous.channel
+      if (previous && item.channel !== previous.channel) {
+        next.leads = next.leads.map((lead) => lead.campaignId === id ? { ...lead, source: item.channel } : lead)
+      }
     }
     if (kind === 'leads' && item.campaignId) {
       const campaign = next.campaigns.find((entry) => entry.id === item.campaignId)
@@ -300,7 +428,7 @@ function applyProposal(id) {
       next[kind] = [...records.map((item) => ({ ...item, id: uid() })), ...next[kind]]
     }
     next.messages = next.messages.map((item) => item.id === id ? { ...item, applied: true } : item)
-    addNotification(next, 'Nomu Intellegence qoralamalari ish maydoniga qo‘shildi.')
+    addNotification(next, aiName + ' qoralamalari ish maydoniga qo‘shildi.')
   })
   if (ok) saved('Qoralamalar ish maydoniga qo‘shildi.')
 }
@@ -328,11 +456,21 @@ function saveProfile(profile) {
   saved('Biznes profili saqlandi.')
 }
 
-function toggleConnection(name) {
+function connectIntegration(selection) {
+  const connection = createDemoConnection(selection)
+  if (!connection) return
+  const provider = integrationProviders.find((item) => item.id === connection.providerId)
   commit((next) => {
-    next.connections = next.connections.includes(name) ? next.connections.filter((item) => item !== name) : [...next.connections, name]
+    next.connections = [...next.connections.filter((item) => item.providerId !== connection.providerId), connection]
   })
-  saved(state.value.connections.includes(name) ? name + ' demo rejimida ulandi.' : name + ' uzildi.')
+  saved(provider.name + ' demo rejimida ulandi.')
+}
+
+function disconnectIntegration(providerId) {
+  const provider = integrationProviders.find((item) => item.id === providerId)
+  if (!provider) return
+  commit((next) => { next.connections = next.connections.filter((item) => item.providerId !== providerId) })
+  saved(provider.name + ' demo ulanishi uzildi.')
 }
 
 function saveTool(result) {
@@ -362,64 +500,77 @@ function readNotifications() {
 
 <template>
   <Login v-if="!signedIn" @login="login" />
-  <div v-else class="app-shell">
-    <button v-if="menuOpen" class="mobile-scrim" aria-label="Menyuni yopish" @click="menuOpen = false"></button>
-    <aside class="sidebar" :class="{ 'is-open': menuOpen }">
-      <a href="#home" class="sidebar-brand" aria-label="NOMU bosh sahifa" @click.prevent="navigate('home')"><Brand /></a>
-      <button class="workspace-switch" @click="navigate('settings')">
-        <span class="workspace-icon"><Icon name="building" :size="18" /></span>
-        <span class="workspace-copy"><strong>{{ state.profile.name }}</strong><span>Ish maydoni</span></span>
-        <Icon name="chevronDown" :size="15" />
-      </button>
-      <nav class="sidebar-nav" aria-label="Asosiy navigatsiya">
-        <div v-for="group in sidebarGroups" :key="group.title" class="nav-group">
-          <h2>{{ group.title }}</h2>
-          <a v-for="item in group.items" :key="item.id" :href="'#' + item.id" class="nav-link"
-            :aria-current="page === item.id ? 'page' : undefined" @click.prevent="navigate(item.id)">
-            <Icon :name="item.icon" :size="18" /><span>{{ item.label }}</span>
-            <span v-if="item.id === 'assistant'" class="ai-badge">AI</span>
-          </a>
+  <div v-else class="app-shell" :class="{ 'is-resizing': resizing }" :style="{ '--sidebar-width': sidebarWidth + 'px' }">
+    <button v-if="menuOpen" class="mobile-scrim" aria-label="Menyuni yopish" @click="closeMenu"></button>
+    <aside id="workspace-sidebar" class="sidebar" :class="{ 'is-open': menuOpen, 'is-compact': sidebarCompact }">
+      <div class="sidebar-body">
+        <div class="sidebar-header">
+          <a href="#home" class="sidebar-brand" :aria-label="brandName + ' bosh sahifa'" @click.prevent="navigate('home')"><Brand /></a>
+          <button ref="menuDismiss" class="icon-button ghost sidebar-close" aria-label="Yon menyuni yopish" @click="closeMenu"><Icon name="close" :size="18" /></button>
         </div>
-      </nav>
-      <div class="sidebar-bottom">
-        <button class="demo-card" @click="navigate('settings', 'integrations')">
-          <span><i></i> Demo ish maydoni</span>
-          <small>Mahalliy rejim · v0.1</small>
-          <Icon name="arrowUpRight" :size="16" />
-        </button>
+        <nav class="sidebar-nav" aria-label="Asosiy navigatsiya">
+          <div v-for="group in sidebarGroups" :key="group.title" class="nav-group">
+            <h2>{{ group.title }}</h2>
+            <a v-for="item in group.items" :key="item.id" :href="'#' + item.id" class="nav-link"
+              :aria-current="page === item.id ? 'page' : undefined" :aria-label="item.label" :title="sidebarCompact ? item.label : undefined" @click.prevent="navigate(item.id)">
+              <Icon :name="item.icon" :size="18" /><span class="nav-label">{{ item.label }}</span>
+              <span v-if="item.id === 'assistant'" class="ai-badge">AI</span>
+            </a>
+          </div>
+        </nav>
       </div>
+      <div class="sidebar-resize" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Yon menyu kengligi"
+        :aria-valuemin="sidebarMin" :aria-valuemax="sidebarMax" :aria-valuenow="sidebarWidth" :aria-valuetext="sidebarWidth + ' piksel'"
+        title="Kenglik uchun sudrang yoki ixcham holatga o‘tish uchun ikki marta bosing" @pointerdown="startSidebarResize" @pointermove="moveSidebarResize"
+        @pointerup="finishSidebarResize" @pointercancel="finishSidebarResize" @lostpointercapture="finishSidebarResize"
+        @keydown="resizeSidebarWithKeyboard" @dblclick="toggleSidebarWidth"><span></span></div>
     </aside>
 
     <div class="workspace-main">
       <header class="topbar">
         <div class="breadcrumbs">
-          <button class="icon-button mobile-menu" aria-label="Menyu" :aria-expanded="menuOpen" @click="menuOpen = !menuOpen"><Icon name="menu" :size="21" /></button>
+          <button ref="menuTrigger" class="icon-button mobile-menu" aria-label="Menyu" :aria-expanded="menuOpen" aria-controls="workspace-sidebar" @click="toggleMenu"><Icon name="menu" :size="20" /></button>
+          <span class="breadcrumb-icon"><Icon :name="currentPage.icon" :size="17" /></span>
           <span class="crumb-home">Ish maydoni</span><Icon class="crumb-home" name="chevronRight" :size="14" /><strong>{{ currentPage.label }}</strong>
         </div>
         <div class="topbar-actions">
-          <button class="top-search" aria-label="Qidirish" @click="openSearch"><Icon name="search" :size="17" /><span>Qidirish…</span><kbd>Ctrl K</kbd></button>
+          <button class="top-search" aria-label="Qidirish" @click="openSearch"><Icon name="search" :size="17" /><span>Ish maydonini qidiring…</span><kbd>Ctrl K</kbd></button>
           <button class="icon-button top-theme" :aria-label="state.theme === 'light' ? 'Qorong‘i mavzuga o‘tish' : 'Yorug‘ mavzuga o‘tish'" @click="setTheme(state.theme === 'light' ? 'dark' : 'light')"><Icon :name="state.theme === 'light' ? 'moon' : 'sun'" :size="18" /></button>
           <button class="icon-button notification-button" aria-label="Bildirishnomalar" @click="modal = { type: 'notifications' }"><Icon name="bell" :size="19" /><i v-if="unread || approvals.length"></i></button>
           <span class="topbar-divider"></span>
-          <button class="avatar-button" aria-label="Profil menyusi" @click="modal = { type: 'profile' }"><span>{{ initials }}</span><Icon name="chevronDown" :size="14" /></button>
+          <div ref="profileAnchor" class="profile-anchor">
+            <button ref="profileTrigger" type="button" class="avatar-button" aria-label="Profil menyusi"
+              :aria-expanded="profileOpen" aria-controls="profile-menu" @click="profileOpen = !profileOpen">
+              <span>{{ initials }}</span><Icon name="chevronDown" :size="14" />
+            </button>
+            <div v-show="profileOpen" id="profile-menu" class="profile-menu">
+              <div class="profile-menu-header"><span>Hisob</span><strong>{{ state.profile.owner }}</strong></div>
+              <ul class="profile-menu-list">
+                <li><button type="button" @click="navigate('settings')"><Icon name="settings" :size="17" />Sozlamalar</button></li>
+                <li><button type="button" class="danger-text" @click="logout"><Icon name="logout" :size="17" />Chiqish</button></li>
+              </ul>
+            </div>
+          </div>
         </div>
       </header>
 
       <main class="workspace-page" id="main-content">
         <Dashboard v-if="page === 'home'" :state="state" :days="days" :approvals="approvals" @navigate="navigate" @create="createRecord" @edit="editRecord" @period="setPeriod" @approvals="modal = { type: 'approvals' }" />
         <Assistant v-else-if="page === 'assistant'" :state="state" @send="sendPrompt" @apply="applyProposal" @navigate="navigate" @clear="modal = { type: 'clear' }" @notify="notify" />
-        <Records v-else-if="collections[page]" :key="page" :kind="page" :state="state" @create="createRecord" @edit="editRecord" @status="updateStatus" @navigate="navigate" @notify="notify" />
+        <Leads v-else-if="page === 'leads'" :state="state" @create="createLead" @edit="editRecord" @status="updateStatus" @notify="notify" />
+        <Records v-else-if="collections[page]" :key="page" :kind="page" :state="state" @create="createRecord" @edit="editRecord" @status="updateStatus" @navigate="navigate" />
         <Analytics v-else-if="page === 'analytics'" :state="state" :days="days" @period="setPeriod" @notify="notify" @navigate="navigate" />
         <Tools v-else-if="page === 'tools'" :state="state" @save="saveTool" @remove="removeTool" @lead="captureLead" @notify="notify" @navigate="navigate" />
-        <Settings v-else-if="page === 'settings'" :state="state" :tab="settingsTab" @tab="settingsTab = $event" @save="saveProfile" @theme="setTheme" @connection="toggleConnection" />
-        <footer class="workspace-footer"><span>NOMU Marketing OS</span><span>Ma’lumotlar shu brauzerda saqlanadi</span></footer>
+        <Settings v-else-if="page === 'settings'" :state="state" :tab="settingsTab" @tab="settingsTab = $event" @save="saveProfile"
+          @connect="connectIntegration" @disconnect="disconnectIntegration" />
+        <footer class="workspace-footer"><span>{{ brandName }}</span><span>Ma’lumotlar shu brauzerda saqlanadi</span></footer>
       </main>
     </div>
 
     <Dialog v-if="modal?.type === 'record'" :key="'record-' + modal.kind + '-' + modal.id" wide
       :title="currentRecord ? (modal.kind === 'leads' ? 'Leadni tahrirlash' : collections[modal.kind].singular[0].toUpperCase() + collections[modal.kind].singular.slice(1) + ' tafsilotlari') : collections[modal.kind].newLabel"
       :subtitle="['content', 'campaigns'].includes(modal.kind) ? 'Mahalliy ish maydonidagi demo yozuv' : undefined" @close="modal = null">
-      <RecordEditor v-if="!modal.id || currentRecord" :key="currentRecord?.status || 'new'" :kind="modal.kind" :record="currentRecord" :default-date="modal.date" :profile="state.profile" :campaigns="state.campaigns"
+      <RecordEditor v-if="!modal.id || currentRecord" :key="currentRecord?.status || modal.status || 'new'" :kind="modal.kind" :record="currentRecord" :default-date="modal.date" :default-status="modal.status" :profile="state.profile" :campaigns="state.campaigns"
         @save="saveRecord" @delete="removeRecord" @close="modal = null" @advance="advance()" @revise="advance(true)" @result="openResults" />
       <p v-else class="dialog-body">Yozuv boshqa oynada o‘chirilgan.</p>
     </Dialog>
@@ -467,14 +618,6 @@ function readNotifications() {
           <span class="icon-tile" :class="item.read ? 'tone-neutral' : 'tone-green'"><Icon name="bell" :size="16" /></span><span class="approval-copy"><strong>{{ item.text }}</strong><span>{{ dateLabel(item.date) }}</span></span><i v-if="!item.read" class="unread-dot"></i>
         </div>
         <div v-if="unread" class="dialog-actions"><button class="button button-secondary" @click="readNotifications">Barchasini o‘qildi deb belgilash</button></div>
-      </div>
-    </Dialog>
-
-    <Dialog v-else-if="modal?.type === 'profile'" title="Profil" @close="modal = null">
-      <div class="dialog-body profile-dialog">
-        <div class="profile-detail"><span class="profile-avatar">{{ initials }}</span><span><strong>{{ state.profile.owner }}</strong><small>{{ state.profile.name }} · Demo admin</small></span></div>
-        <button class="button button-secondary" @click="navigate('settings')"><Icon name="settings" :size="17" />Sozlamalar</button>
-        <button class="button button-secondary danger-text" @click="logout"><Icon name="logout" :size="17" />Chiqish</button>
       </div>
     </Dialog>
 
