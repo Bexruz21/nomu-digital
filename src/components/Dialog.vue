@@ -11,12 +11,12 @@ onBeforeUnmount(() => dialog.value?.close())
 </script>
 
 <template>
-  <dialog ref="dialog" class="dialog" :class="{ 'dialog-wide': wide }" :aria-label="title"
+  <dialog ref="dialog" class="dialog" :class="{ 'dialog-wide': wide }" :aria-label="$t(title)"
     @cancel.prevent="emit('close')" @click.self="emit('close')">
     <section class="dialog-inner">
       <header v-if="!bare" class="dialog-head">
-        <div><h2>{{ title }}</h2><p v-if="subtitle">{{ subtitle }}</p></div>
-        <button type="button" class="icon-button" aria-label="Yopish" @click="emit('close')"><Icon name="close" :size="19" /></button>
+        <div><h2>{{ $t(title) }}</h2><p v-if="subtitle">{{ $t(subtitle) }}</p></div>
+        <button type="button" class="icon-button" :aria-label='$t("Yopish")' @click="emit('close')"><Icon name="close" :size="19" /></button>
       </header>
       <slot />
     </section>

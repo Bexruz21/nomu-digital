@@ -1,4 +1,6 @@
 import { normalizeConnections } from './integrations.js'
+import { modules } from './features.js'
+import { locale, localeTag, tr } from './i18n.js'
 
 export const brandName = 'Marketlane.ai'
 export const aiName = 'Marketlane AI'
@@ -14,6 +16,7 @@ export const pages = [
   { id: 'tasks', label: 'Vazifalar', icon: 'checkSquare', management: true },
   { id: 'tools', label: 'Marketing vositalari', icon: 'layers', management: true },
   { id: 'settings', label: 'Sozlamalar', icon: 'settings', management: true },
+  ...modules.map(module => ({id:module.id,label:module.label,icon:module.icon,extension:true,management:['automation','team','billing'].includes(module.id)})),
 ]
 
 export const collections = {
@@ -82,17 +85,18 @@ export function dateKey(offset = 0, from = new Date()) {
 
 export function dateLabel(value) {
   if (!value) return '—'
-  const [, month, day] = value.split('-').map(Number)
-  return day + ' ' + monthNames[month - 1]
+  const date = new Date(value + 'T12:00:00')
+  if (locale.value === 'uz' && !Number.isNaN(date.getTime())) return date.getDate() + ' ' + monthNames[date.getMonth()]
+  return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat(localeTag(), {day:'numeric', month:'short'}).format(date)
 }
 
-export const number = (value, digits = 0) => new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: digits }).format(value)
+export const number = (value, digits = 0) => new Intl.NumberFormat(localeTag(), { maximumFractionDigits: digits }).format(value)
 export const money = (value, digits = 0) => '$' + number(value, digits)
 export const uid = () => globalThis.crypto?.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2)
 
 export function compact(value) {
-  if (value >= 1_000_000) return number(value / 1_000_000, 1) + ' mln'
-  if (value >= 1000) return number(value / 1000, 1) + ' ming'
+  if (value >= 1_000_000) return number(value / 1_000_000, 1) + tr(' mln',' млн','M')
+  if (value >= 1000) return number(value / 1000, 1) + tr(' ming',' тыс.','K')
   return number(value)
 }
 
@@ -166,7 +170,7 @@ export function sumResults(rows) {
   return rows.reduce((total, row) => {
     for (const key in total) total[key] += Number(row[key]) || 0
     return total
-  }, { reach: 0, leads: 0, spend: 0, revenue: 0 })
+  }, { reach: 0, leads: 0, spend: 0, revenue: 0, impressions: 0, clicks: 0, conversions: 0, customers: 0 })
 }
 
 export function performance(campaigns, days) {

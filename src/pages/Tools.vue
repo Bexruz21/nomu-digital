@@ -62,57 +62,57 @@ function captureLead() {
 <template>
   <div class="page-stack">
     <header class="page-heading">
-      <div><div class="eyebrow"><i></i> BOSHQARUV</div><h1>Marketing vositalari</h1><p>SEO, xabarlar, kreativ briflar va landing sahifalarni sinab ko‘ring.</p></div>
+      <div><div class="eyebrow"><i></i> {{ $t("BOSHQARUV") }}</div><h1>{{ $t("Marketing vositalari") }}</h1><p>{{ $t("SEO, xabarlar, kreativ briflar va landing sahifalarni sinab ko‘ring.") }}</p></div>
     </header>
     <div class="tools-grid">
       <button v-for="item in toolsCatalog" :key="item.id" class="glass tool-card" :aria-pressed="selected === item.id" @click="choose(item.id)">
         <span class="icon-tile" :class="'tone-' + item.color"><Icon :name="item.icon" :size="22" /></span>
-        <span><strong>{{ item.title }}</strong><small>{{ item.summary }}</small></span>
+        <span><strong>{{ $t(item.title) }}</strong><small>{{ $t(item.summary) }}</small></span>
         <Icon name="arrowUpRight" :size="17" />
       </button>
     </div>
     <div class="tool-workspace">
       <section class="glass tool-form">
-        <div class="section-head"><div><h2>{{ tool.title }}</h2><p>{{ tool.summary }}</p></div><span class="icon-tile" :class="'tone-' + tool.color"><Icon :name="tool.icon" :size="19" /></span></div>
+        <div class="section-head"><div><h2>{{ $t(tool.title) }}</h2><p>{{ $t(tool.summary) }}</p></div><span class="icon-tile" :class="'tone-' + tool.color"><Icon :name="tool.icon" :size="19" /></span></div>
         <form class="record-form" @submit.prevent="generate">
-          <label class="field"><span>{{ tool.field }}</span><input v-model.trim="topic" required maxlength="140" :placeholder="tool.id === 'seo' && state.profile.website ? state.profile.website : tool.example" /></label>
-          <label class="field"><span>Variant</span><select v-model="variant"><option v-for="option in tool.variants" :key="option">{{ option }}</option></select></label>
-          <label v-if="['landing', 'brand'].includes(tool.id)" class="field"><span>Auditoriya (ixtiyoriy)</span><input v-model.trim="detail" maxlength="220" :placeholder="state.profile.audience" /></label>
-          <button type="submit" class="button button-primary"><Icon name="sparkles" :size="17" />Qoralama tayyorlash</button>
+          <label class="field"><span>{{ $t(tool.field) }}</span><input v-model.trim="topic" required maxlength="140" :placeholder="$t(tool.id === 'seo' && state.profile.website ? state.profile.website : tool.example)" /></label>
+          <label class="field"><span>{{ $t("Variant") }}</span><select v-model="variant"><option :value='option' v-for="option in tool.variants" :key="option">{{ $t(option) }}</option></select></label>
+          <label v-if="['landing', 'brand'].includes(tool.id)" class="field"><span>{{ $t("Auditoriya (ixtiyoriy)") }}</span><input v-model.trim="detail" maxlength="220" :placeholder="$t(state.profile.audience)" /></label>
+          <button type="submit" class="button button-primary"><Icon name="sparkles" :size="17" />{{ $t("Qoralama tayyorlash") }}</button>
         </form>
         <div v-if="state.savedTools.length" class="saved-tools">
-          <h3>Saqlangan qoralamalar</h3>
+          <h3>{{ $t("Saqlangan qoralamalar") }}</h3>
           <button v-for="item in state.savedTools" :key="item.id" class="approval-row" @click="openDraft(item)">
-            <span class="icon-tile tone-neutral"><Icon name="file" :size="17" /></span><span class="approval-copy"><strong>{{ item.title }}</strong><span>{{ item.variant }} · {{ dateLabel(item.date) }}</span></span><Icon name="chevronRight" :size="16" />
+            <span class="icon-tile tone-neutral"><Icon name="file" :size="17" /></span><span class="approval-copy"><strong>{{ $t(item.title) }}</strong><span>{{ $t(item.variant) }} · {{ $t(dateLabel(item.date)) }}</span></span><Icon name="chevronRight" :size="16" />
           </button>
         </div>
       </section>
       <section class="glass tool-output">
-        <div class="section-head"><div><h2>Natija</h2><p>{{ result ? result.variant : 'Qoralamani shu yerda ko‘rasiz' }}</p></div><span class="status-chip tone-neutral"><i></i> Demo</span></div>
+        <div class="section-head"><div><h2>{{ $t("Natija") }}</h2><p>{{ $t(result ? result.variant : $t('Qoralamani shu yerda ko‘rasiz')) }}</p></div><span class="status-chip tone-neutral"><i></i> {{ $t("Demo") }}</span></div>
         <template v-if="result">
           <div v-if="result.landing" class="landing-preview">
-            <span class="eyebrow">LANDING · JONLI MAHALLIY MAKET</span>
-            <h3>{{ result.landing.heading }}</h3>
-            <p>{{ result.landing.tagline }}</p>
+            <span class="eyebrow">{{ $t("LANDING · JONLI MAHALLIY MAKET") }}</span>
+            <h3>{{ $t(result.landing.heading) }}</h3>
+            <p>{{ $t(result.landing.tagline) }}</p>
             <form v-if="!captured" class="record-form" @submit.prevent="captureLead">
-              <label class="field"><span>Ism</span><input v-model.trim="contactName" required maxlength="110" placeholder="Ismingiz" /></label>
-              <label class="field"><span>Email</span><input v-model.trim="contactEmail" type="email" required maxlength="150" placeholder="ism@example.com" /></label>
-              <button type="submit" class="button button-primary">{{ result.landing.cta }}<Icon name="arrowRight" :size="16" /></button>
+              <label class="field"><span>{{ $t("Ism") }}</span><input v-model.trim="contactName" required maxlength="110" :placeholder='$t("Ismingiz")' /></label>
+              <label class="field"><span>{{ $t("Email") }}</span><input v-model.trim="contactEmail" type="email" required maxlength="150" :placeholder='$t("ism@example.com")' /></label>
+              <button type="submit" class="button button-primary">{{ $t(result.landing.cta) }}<Icon name="arrowRight" :size="16" /></button>
             </form>
             <div v-else class="landing-success">
-              <p><Icon name="check" :size="18" />Murojaat CRM’ga qo‘shildi.</p>
-              <button class="button button-secondary" @click="emit('navigate', 'leads')">Leadlarni ochish<Icon name="arrowRight" :size="16" /></button>
+              <p><Icon name="check" :size="18" />{{ $t("Murojaat CRM’ga qo‘shildi.") }}</p>
+              <button class="button button-secondary" @click="emit('navigate', 'leads')">{{ $t("Leadlarni ochish") }}<Icon name="arrowRight" :size="16" /></button>
             </div>
           </div>
-          <ul class="tool-lines"><li v-for="(line, i) in result.lines" :key="i">{{ line }}</li></ul>
+          <ul class="tool-lines"><li v-for="(line, i) in result.lines" :key="i">{{ $t(line) }}</li></ul>
           <div class="reply-actions">
-            <button class="button button-primary" :disabled="saved" @click="emit('save', result)"><Icon :name="saved ? 'check' : 'plus'" :size="17" />{{ saved ? 'Saqlangan' : 'Saqlash' }}</button>
-            <button class="button button-secondary" @click="copy"><Icon name="copy" :size="16" />Nusxalash</button>
-            <button v-if="saved" class="icon-button danger-text" aria-label="Saqlangan qoralamani o‘chirish" @click="emit('remove', result.id)"><Icon name="trash" :size="17" /></button>
+            <button class="button button-primary" :disabled="saved" @click="emit('save', result)"><Icon :name="saved ? 'check' : 'plus'" :size="17" />{{ $t(saved ? $t('Saqlangan') : $t('Saqlash')) }}</button>
+            <button class="button button-secondary" @click="copy"><Icon name="copy" :size="16" />{{ $t("Nusxalash") }}</button>
+            <button v-if="saved" class="icon-button danger-text" :aria-label='$t("Saqlangan qoralamani o‘chirish")' @click="emit('remove', result.id)"><Icon name="trash" :size="17" /></button>
           </div>
         </template>
         <div v-else class="empty-state tool-empty">
-          <span class="icon-tile tone-green"><Icon name="file" :size="24" /></span><h2>Qoralamaga tayyor</h2><p>Mavzuni kiriting va variantni tanlang.</p>
+          <span class="icon-tile tone-green"><Icon name="file" :size="24" /></span><h2>{{ $t("Qoralamaga tayyor") }}</h2><p>{{ $t("Mavzuni kiriting va variantni tanlang.") }}</p>
         </div>
       </section>
     </div>

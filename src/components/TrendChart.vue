@@ -50,14 +50,14 @@ function move(event) {
 <template>
   <section class="glass chart-card">
     <div class="section-head">
-      <div><h2>Marketing samaradorligi</h2><p>Tanlangan davrdagi natijalar</p></div>
-      <div class="segmented" aria-label="Grafik ko‘rsatkichi">
+      <div><h2>{{ $t("Marketing samaradorligi") }}</h2><p>{{ $t("Tanlangan davrdagi natijalar") }}</p></div>
+      <div class="segmented" :aria-label='$t("Grafik ko‘rsatkichi")'>
         <button v-for="choice in choices" :key="choice.id" type="button" :aria-pressed="metric === choice.id"
-          @click="metric = choice.id; hover = null">{{ choice.label }}</button>
+          @click="metric = choice.id; hover = null">{{ $t(choice.label) }}</button>
       </div>
     </div>
     <div class="chart-wrap" @mouseleave="hover = null">
-      <svg :viewBox="'0 0 ' + width + ' ' + height" class="trend-chart" role="group" aria-label="Davrlar bo‘yicha marketing natijalari" @pointermove="move">
+      <svg :viewBox="'0 0 ' + width + ' ' + height" class="trend-chart" role="group" :aria-label='$t("Davrlar bo‘yicha marketing natijalari")' @pointermove="move">
         <defs>
           <linearGradient :id="gradient" x1="0" x2="0" y1="0" y2="1" gradientUnits="objectBoundingBox">
             <stop offset="0%" stop-color="var(--chart-color)" stop-opacity=".32" />
@@ -66,24 +66,24 @@ function move(event) {
         </defs>
         <g v-for="tick in plot.ticks" :key="tick.y">
           <line :x1="left" :x2="right" :y1="tick.y" :y2="tick.y" class="chart-gridline" />
-          <text x="34" :y="tick.y + 4" text-anchor="end">{{ tick.label }}</text>
+          <text x="34" :y="tick.y + 4" text-anchor="end">{{ $t(tick.label) }}</text>
         </g>
         <path :d="plot.area" :fill="'url(#' + gradient + ')'" />
         <path :d="plot.line" class="chart-line" />
         <line v-if="active" :x1="active.x" :x2="active.x" :y1="top" :y2="bottom" class="chart-guide" />
         <g v-for="(point, i) in plot.points" :key="i">
-          <text :x="point.x" y="191" text-anchor="middle" :class="{ 'chart-label-alternate': i % 2 === 1 }">{{ labels[i] }}</text>
+          <text :x="point.x" y="191" text-anchor="middle" :class="{ 'chart-label-alternate': i % 2 === 1 }">{{ $t(labels[i]) }}</text>
           <circle v-if="hover === i || (hover === null && i === plot.points.length - 1)" :cx="point.x" :cy="point.y" r="8" class="chart-halo" />
           <circle :cx="point.x" :cy="point.y" :r="hover === i || i === plot.points.length - 1 ? 4 : 2.7" class="chart-dot" />
           <circle :cx="point.x" :cy="point.y" r="12" fill="transparent" tabindex="0" role="img"
-            :aria-label="labels[i] + ', ' + number(series[i][metric])" @focus="hover = i" @blur="hover = null" />
+            :aria-label="$t(labels[i] + ', ' + number(series[i][metric]))" @focus="hover = i" @blur="hover = null" />
         </g>
       </svg>
       <div v-if="active" class="chart-tooltip" :style="{ left: Math.min(81, Math.max(15, active.x / width * 100)) + '%' }">
-        <span>{{ series[hover].start === series[hover].date ? dateLabel(series[hover].date) : dateLabel(series[hover].start) + ' – ' + dateLabel(series[hover].date) }}</span>
-        <strong><i />{{ number(series[hover][metric]) }} {{ choices.find((choice) => choice.id === metric).label.toLowerCase() }}</strong>
+        <span>{{ $t(series[hover].start === series[hover].date ? dateLabel(series[hover].date) : dateLabel(series[hover].start) + ' – ' + dateLabel(series[hover].date)) }}</span>
+        <strong><i />{{ $t(number(series[hover][metric])) }} {{ $t(choices.find((choice) => choice.id === metric).label.toLowerCase()) }}</strong>
       </div>
     </div>
-    <div class="chart-caption"><span><i></i>{{ choices.find((choice) => choice.id === metric).label }}</span><span><Icon name="info" :size="14" /> Demo va kiritilgan natijalar</span></div>
+    <div class="chart-caption"><span><i></i>{{ $t(choices.find((choice) => choice.id === metric).label) }}</span><span><Icon name="info" :size="14" /> {{ $t("Demo va kiritilgan natijalar") }}</span></div>
   </section>
 </template>

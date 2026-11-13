@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { allowedStatuses, collections, dateLabel, downloadCsv, number, sources, statuses } from '../data.js'
 import Icon from '../components/Icon.vue'
+import { t, tr } from '../i18n.js'
 
 const props = defineProps({ state: { type: Object, required: true } })
 const emit = defineEmits(['create', 'edit', 'status', 'notify'])
@@ -29,7 +30,7 @@ const visible = computed(() => {
   return props.state.leads.filter((lead) => (
     (filter.value === 'all' || lead.status === filter.value) &&
     (source.value === 'all' || lead.source === source.value) &&
-    [lead.title, lead.email, lead.phone, lead.notes, lead.source, campaigns.value.get(lead.campaignId)]
+    [lead.title, lead.email, lead.phone, lead.notes, lead.tags, t(lead.source), campaigns.value.get(lead.campaignId)]
       .some((value) => String(value ?? '').toLocaleLowerCase().includes(term))
   ))
 })
@@ -97,39 +98,39 @@ function exportLeads() {
 <template>
   <div class="page-stack leads-page">
     <header class="page-heading">
-      <div><div class="eyebrow"><i></i> CRM · SAVDO VORONKASI</div><h1>{{ config.title }}</h1><p>{{ config.intro }}</p></div>
+      <div><div class="eyebrow"><i></i> {{ $t("CRM · SAVDO VORONKASI") }}</div><h1>{{ $t(config.title) }}</h1><p>{{ $t(config.intro) }}</p></div>
       <div class="heading-actions">
-        <button class="button button-secondary" :disabled="!visible.length" @click="exportLeads"><Icon name="download" :size="17" />CSV</button>
-        <button class="button button-primary" @click="emit('create', 'new')"><Icon name="plus" :size="18" />{{ config.newLabel }}</button>
+        <button class="button button-secondary" :disabled="!visible.length" @click="exportLeads"><Icon name="download" :size="17" />{{ $t("CSV") }}</button>
+        <button class="button button-primary" @click="emit('create', 'new')"><Icon name="plus" :size="18" />{{ $t(config.newLabel) }}</button>
       </div>
     </header>
 
-    <div class="lead-stats" aria-label="Leadlar ko‘rsatkichlari">
+    <div class="lead-stats" :aria-label='$t("Leadlar ko‘rsatkichlari")'>
       <button v-for="stat in stats" :key="stat.id" class="glass summary-card lead-stat" :aria-pressed="filter === stat.id"
         @click="filter = filter === stat.id ? 'all' : stat.id">
         <span class="icon-tile" :class="'tone-' + stat.color"><Icon :name="stat.icon" :size="19" /></span>
-        <span><strong>{{ number(stat.count) }}</strong><span>{{ stat.label }}</span></span>
+        <span><strong>{{ $t(number(stat.count)) }}</strong><span>{{ $t(stat.label) }}</span></span>
         <Icon name="chevronRight" :size="15" />
       </button>
     </div>
 
-    <section class="lead-workspace" aria-label="Leadlar doskasi">
+    <section class="lead-workspace" :aria-label='$t("Leadlar doskasi")'>
       <div class="glass lead-toolbar">
-        <label class="inline-search"><Icon name="search" :size="17" /><input v-model="query" type="search" aria-label="Leadlar bo‘yicha qidirish" placeholder="Ism, email yoki kampaniya…" /></label>
+        <label class="inline-search"><Icon name="search" :size="17" /><input v-model="query" type="search" :aria-label='$t("Leadlar bo‘yicha qidirish")' :placeholder='$t("Ism, email yoki kampaniya…")' /></label>
         <div class="lead-filters">
-          <label class="filter-select"><Icon name="filter" :size="16" /><select v-model="filter" aria-label="Holat bo‘yicha filtrlash">
-            <option value="all">Barcha holatlar</option><option v-for="stage in stages" :key="stage" :value="stage">{{ statuses[stage].label }}</option>
+          <label class="filter-select"><Icon name="filter" :size="16" /><select v-model="filter" :aria-label='$t("Holat bo‘yicha filtrlash")'>
+            <option value="all">{{ $t("Barcha holatlar") }}</option><option v-for="stage in stages" :key="stage" :value="stage">{{ $t(statuses[stage].label) }}</option>
           </select></label>
-          <label class="filter-select"><Icon name="layers" :size="16" /><select v-model="source" aria-label="Manba bo‘yicha filtrlash">
-            <option value="all">Barcha manbalar</option><option v-for="item in sources" :key="item">{{ item }}</option>
+          <label class="filter-select"><Icon name="layers" :size="16" /><select v-model="source" :aria-label='$t("Manba bo‘yicha filtrlash")'>
+            <option value="all">{{ $t("Barcha manbalar") }}</option><option :value='item' v-for="item in sources" :key="item">{{ $t(item) }}</option>
           </select></label>
-          <button v-if="filtered" class="button button-text button-compact" @click="clearFilters"><Icon name="close" :size="14" />Tozalash</button>
+          <button v-if="filtered" class="button button-text button-compact" @click="clearFilters"><Icon name="close" :size="14" />{{ $t("Tozalash") }}</button>
         </div>
       </div>
 
       <div class="lead-board-header">
-        <h2>Leadlar doskasi <span>{{ number(visible.length) }} ta</span></h2>
-        <p class="lead-drag-hint"><Icon name="grip" :size="15" /> Kartani boshqa bosqichga sudrang</p>
+        <h2>{{ $t("Leadlar doskasi") }} <span>{{ $t(number(visible.length)) }} {{ $t("ta") }}</span></h2>
+        <p class="lead-drag-hint"><Icon name="grip" :size="15" /> {{ $t("Kartani boshqa bosqichga sudrang") }}</p>
       </div>
       <div class="lead-board" :class="{ 'single-lane': filter !== 'all' }">
         <section v-for="lane in lanes" :key="lane.id" class="lead-lane" :class="['tone-' + lane.color, { 'is-target': target === lane.id }]"
@@ -137,37 +138,39 @@ function exportLeads() {
           @dragleave="dragLeave($event, lane.id)" @drop="dropLead($event, lane.id)">
           <header class="lane-header">
             <span class="lane-dot" aria-hidden="true"></span>
-            <h3 :id="'lead-stage-' + lane.id">{{ lane.label }}</h3>
-            <span class="lane-count">{{ number(lane.cards.length) }}</span>
-            <button class="icon-button ghost" :aria-label="lane.label + ' bosqichiga lead qo‘shish'" title="Lead qo‘shish" @click="emit('create', lane.id)"><Icon name="plus" :size="17" /></button>
+            <h3 :id="'lead-stage-' + lane.id">{{ $t(lane.label) }}</h3>
+            <span class="lane-count">{{ $t(number(lane.cards.length)) }}</span>
+            <button class="icon-button ghost" :aria-label="$t(lane.label + ' bosqichiga lead qo‘shish')" :title='$t("Lead qo‘shish")' @click="emit('create', lane.id)"><Icon name="plus" :size="17" /></button>
           </header>
           <div v-if="lane.cards.length" class="lane-cards">
             <article v-for="lead in lane.cards" :key="lead.id" class="lead-card" :class="{ 'is-dragging': dragging === lead.id }"
               draggable="true" :aria-labelledby="'lead-name-' + lead.id" @dragstart="startDrag($event, lead)" @dragend="endDrag">
               <div class="lead-card-head">
-                <span class="lead-avatar" aria-hidden="true">{{ initials(lead.title) }}</span>
+                <span class="lead-avatar" aria-hidden="true">{{ $t(initials(lead.title)) }}</span>
                 <div>
-                  <button :id="'lead-name-' + lead.id" class="lead-name" :title="lead.title" @click="emit('edit', 'leads', lead.id)">{{ lead.title }}</button>
-                  <span v-if="lead.email" class="lead-contact" :title="lead.email">{{ lead.email }}</span>
-                  <span v-if="lead.phone" class="lead-contact" :title="lead.phone">{{ lead.phone }}</span>
+                  <button :id="'lead-name-' + lead.id" class="lead-name" :title="$t(lead.title)" @click="emit('edit', 'leads', lead.id)">{{ $t(lead.title) }}</button>
+                  <span v-if="lead.email" class="lead-contact" :title="$t(lead.email)">{{ $t(lead.email) }}</span>
+                  <span v-if="lead.phone" class="lead-contact" :title="$t(lead.phone)">{{ $t(lead.phone) }}</span>
                 </div>
                 <Icon class="lead-grip" name="grip" :size="17" />
               </div>
-              <p v-if="lead.notes" class="lead-notes" :title="lead.notes">{{ lead.notes }}</p>
-              <p v-if="campaigns.has(lead.campaignId)" class="lead-campaign" :title="campaigns.get(lead.campaignId)"><Icon name="megaphone" :size="13" /><span>{{ campaigns.get(lead.campaignId) }}</span></p>
+              <p v-if="lead.notes" class="lead-notes" :title="$t(lead.notes)">{{ $t(lead.notes) }}</p>
+              <p v-if="campaigns.has(lead.campaignId)" class="lead-campaign" :title="$t(campaigns.get(lead.campaignId))"><Icon name="megaphone" :size="13" /><span>{{ $t(campaigns.get(lead.campaignId)) }}</span></p>
               <div class="lead-meta">
-                <span class="lead-source">{{ lead.source }}</span>
-                <span class="lead-date"><Icon name="calendar" :size="13" />{{ dateLabel(lead.date) }}</span>
+                <span v-if="lead.score" class="lead-quality">{{tr('Sifat','Качество','Quality')}} {{lead.score}}/100</span>
+                <span v-if="lead.tags" class="lead-source">{{lead.tags}}</span>
+                <span class="lead-source">{{ $t(lead.source) }}</span>
+                <span class="lead-date"><Icon name="calendar" :size="13" />{{ $t(dateLabel(lead.date)) }}</span>
               </div>
               <div class="lead-card-footer">
-                <select class="lead-status" :value="lead.status" :aria-label="lead.title + ' holati'" @change="moveLead(lead, $event.target.value)">
-                  <option v-for="stage in stages" :key="stage" :value="stage">{{ statuses[stage].label }}</option>
+                <select class="lead-status" :value="lead.status" :aria-label="t('Holat') + ': ' + lead.title" @change="moveLead(lead, $event.target.value)">
+                  <option v-for="stage in stages" :key="stage" :value="stage">{{ $t(statuses[stage].label) }}</option>
                 </select>
-                <button class="icon-button ghost" :aria-label="lead.title + 'ni tahrirlash'" title="Tahrirlash" @click="emit('edit', 'leads', lead.id)"><Icon name="pencil" :size="15" /></button>
+                <button class="icon-button ghost" :aria-label="t('Tahrirlash') + ': ' + lead.title" :title='$t("Tahrirlash")' @click="emit('edit', 'leads', lead.id)"><Icon name="pencil" :size="15" /></button>
               </div>
             </article>
           </div>
-          <div v-else class="lane-empty"><Icon name="inbox" :size="19" />{{ filtered ? 'Mos lead yo‘q' : 'Bu bosqichda lead yo‘q' }}</div>
+          <div v-else class="lane-empty"><Icon name="inbox" :size="19" />{{ $t(filtered ? $t('Mos lead yo‘q') : $t('Bu bosqichda lead yo‘q')) }}</div>
         </section>
       </div>
     </section>

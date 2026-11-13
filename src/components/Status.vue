@@ -7,5 +7,5 @@ const status = computed(() => statuses[props.value] || statuses.draft)
 </script>
 
 <template>
-  <span class="status-chip" :class="'tone-' + status.color"><i />{{ status.label }}</span>
+  <span class="status-chip" :class="'tone-' + status.color"><i />{{ $t(status.label) }}</span>
 </template>

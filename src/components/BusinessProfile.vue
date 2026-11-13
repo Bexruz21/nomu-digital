@@ -22,61 +22,61 @@ watch(() => props.profile, (profile, previous) => {
       <section class="glass profile-section" aria-labelledby="profile-company">
         <div class="profile-section-head">
           <span class="icon-tile tone-purple"><Icon name="building" :size="19" /></span>
-          <div><h2 id="profile-company">Kompaniya ma’lumotlari</h2><p>Ish maydonidagi biznes va profil ma’lumotlari.</p></div>
+          <div><h2 id="profile-company">{{ $t("Kompaniya ma’lumotlari") }}</h2><p>{{ $t("Ish maydonidagi biznes va profil ma’lumotlari.") }}</p></div>
         </div>
         <div class="form-grid">
-          <label class="field"><span>Kompaniya nomi</span><input v-model.trim="draft.name" maxlength="60" required /></label>
-          <label class="field"><span>Faoliyat sohasi</span><input v-model.trim="draft.industry" maxlength="100" required /></label>
-          <label class="field"><span>Profil ismi</span><input v-model.trim="draft.owner" maxlength="60" required /></label>
-          <label class="field"><span>Sayt <small>(ixtiyoriy)</small></span><input v-model.trim="draft.website" type="url" maxlength="200" placeholder="https://example.com" /></label>
+          <label class="field"><span>{{ $t("Kompaniya nomi") }}</span><input v-model.trim="draft.name" maxlength="60" required /></label>
+          <label class="field"><span>{{ $t("Faoliyat sohasi") }}</span><input v-model.trim="draft.industry" maxlength="100" required /></label>
+          <label class="field"><span>{{ $t("Profil ismi") }}</span><input v-model.trim="draft.owner" maxlength="60" required /></label>
+          <label class="field"><span>{{ $t("Sayt") }} <small>{{ $t("(ixtiyoriy)") }}</small></span><input v-model.trim="draft.website" type="url" maxlength="200" :placeholder='$t("https://example.com")' /></label>
         </div>
       </section>
 
       <section class="glass profile-section" aria-labelledby="profile-audience">
         <div class="profile-section-head">
           <span class="icon-tile tone-blue"><Icon name="users" :size="19" /></span>
-          <div><h2 id="profile-audience">Taklif va auditoriya</h2><p>Nimani taklif qilishingiz va kim bilan muloqot qilishingizni yozing.</p></div>
+          <div><h2 id="profile-audience">{{ $t("Taklif va auditoriya") }}</h2><p>{{ $t("Nimani taklif qilishingiz va kim bilan muloqot qilishingizni yozing.") }}</p></div>
         </div>
         <div class="form-grid">
-          <label class="field"><span>Mahsulot yoki xizmat</span><textarea v-model.trim="draft.offer" maxlength="180" rows="2" required /></label>
-          <label class="field"><span>Maqsadli auditoriya</span><textarea v-model.trim="draft.audience" maxlength="220" rows="2" required /></label>
-          <label class="field span-2"><span>Brend ohangi</span><input v-model.trim="draft.voice" maxlength="140" required /></label>
+          <label class="field"><span>{{ $t("Mahsulot yoki xizmat") }}</span><textarea v-model.trim="draft.offer" maxlength="180" rows="2" required /></label>
+          <label class="field"><span>{{ $t("Maqsadli auditoriya") }}</span><textarea v-model.trim="draft.audience" maxlength="220" rows="2" required /></label>
+          <label class="field span-2"><span>{{ $t("Brend ohangi") }}</span><input v-model.trim="draft.voice" maxlength="140" required /></label>
         </div>
       </section>
 
       <section class="glass profile-section" aria-labelledby="profile-goal">
         <div class="profile-section-head">
           <span class="icon-tile tone-pink"><Icon name="target" :size="19" /></span>
-          <div><h2 id="profile-goal">Maqsad va budjet</h2><p>{{ aiName }} reja tuzishda shu chegaralarni hisobga oladi.</p></div>
+          <div><h2 id="profile-goal">{{ $t("Maqsad va budjet") }}</h2><p>{{ $t(aiName) }} {{ $t("reja tuzishda shu chegaralarni hisobga oladi.") }}</p></div>
         </div>
         <div class="form-grid">
-          <label class="field"><span>Biznes maqsadi</span><textarea v-model.trim="draft.objective" maxlength="180" rows="2" required /></label>
-          <label class="field"><span>Oylik budjet ($)</span><input v-model.number="draft.budget" type="number" min="0" max="30000000" step="0.01" required /></label>
+          <label class="field"><span>{{ $t("Biznes maqsadi") }}</span><textarea v-model.trim="draft.objective" maxlength="180" rows="2" required /></label>
+          <label class="field"><span>{{ $t("Oylik budjet ($)") }}</span><input v-model.number="draft.budget" type="number" min="0" max="30000000" step="0.01" required /></label>
         </div>
       </section>
 
       <div class="glass profile-actions">
-        <span class="profile-save-state" :class="{ 'is-dirty': dirty }" aria-live="polite"><i></i>{{ dirty ? 'Saqlanmagan o‘zgarishlar' : 'Profil saqlangan' }}</span>
+        <span class="profile-save-state" :class="{ 'is-dirty': dirty }" aria-live="polite"><i></i>{{ $t(dirty ? $t('Saqlanmagan o‘zgarishlar') : $t('Profil saqlangan')) }}</span>
         <div class="heading-actions">
-          <button v-if="dirty" type="button" class="button button-secondary" @click="Object.assign(draft, profile)">Tiklash</button>
-          <button type="submit" class="button button-primary" :disabled="!dirty"><Icon name="check" :size="17" />Profilni saqlash</button>
+          <button v-if="dirty" type="button" class="button button-secondary" @click="Object.assign(draft, profile)">{{ $t("Tiklash") }}</button>
+          <button type="submit" class="button button-primary" :disabled="!dirty"><Icon name="check" :size="17" />{{ $t("Profilni saqlash") }}</button>
         </div>
       </div>
     </form>
 
-    <aside class="glass profile-preview" aria-label="AI konteksti">
-      <span class="eyebrow"><Icon name="sparkles" :size="14" /> AI KONTEKSTI</span>
+    <aside class="glass profile-preview" :aria-label='$t("AI konteksti")'>
+      <span class="eyebrow"><Icon name="sparkles" :size="14" /> {{ $t("AI KONTEKSTI") }}</span>
       <div class="profile-preview-identity">
-        <span class="profile-preview-mark">{{ initials }}</span>
-        <div><h2>{{ draft.name || 'Biznes nomi' }}</h2><p>{{ draft.industry || 'Faoliyat sohasi' }}</p></div>
+        <span class="profile-preview-mark">{{ $t(initials) }}</span>
+        <div><h2>{{ $t(draft.name || $t('Biznes nomi')) }}</h2><p>{{ $t(draft.industry || $t('Faoliyat sohasi')) }}</p></div>
       </div>
       <dl>
-        <div><dt>Maqsad</dt><dd>{{ draft.objective || '—' }}</dd></div>
-        <div><dt>Auditoriya</dt><dd>{{ draft.audience || '—' }}</dd></div>
-        <div><dt>Brend ohangi</dt><dd>{{ draft.voice || '—' }}</dd></div>
-        <div><dt>Oylik budjet</dt><dd>{{ draft.budget === '' ? '—' : money(draft.budget, 2) }}</dd></div>
+        <div><dt>{{ $t("Maqsad") }}</dt><dd>{{ $t(draft.objective || '—') }}</dd></div>
+        <div><dt>{{ $t("Auditoriya") }}</dt><dd>{{ $t(draft.audience || '—') }}</dd></div>
+        <div><dt>{{ $t("Brend ohangi") }}</dt><dd>{{ $t(draft.voice || '—') }}</dd></div>
+        <div><dt>{{ $t("Oylik budjet") }}</dt><dd>{{ $t(draft.budget === '' ? '—' : money(draft.budget, 2)) }}</dd></div>
       </dl>
-      <p class="profile-preview-note"><Icon name="info" :size="16" /> {{ aiName }} profilni saqlaganingizdan keyin shu kontekstdan foydalanadi.</p>
+      <p class="profile-preview-note"><Icon name="info" :size="16" /> {{ $t(aiName) }} {{ $t("profilni saqlaganingizdan keyin shu kontekstdan foydalanadi.") }}</p>
     </aside>
   </div>
 </template>

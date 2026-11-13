@@ -20,32 +20,32 @@ const cards = computed(() => integrationProviders.map((provider) => {
     <section class="glass integration-overview">
       <span class="icon-tile tone-purple"><Icon name="link" :size="22" /></span>
       <div class="integration-overview-copy">
-        <span class="eyebrow">MAHALLIY DEMO</span>
-        <h2>Kanallar va xizmatlar</h2>
-        <p>Namunaviy hisobni tanlang, ruxsatlarni ko‘rib chiqing va ulanishni tasdiqlang.</p>
+        <span class="eyebrow">{{ $t("MAHALLIY DEMO") }}</span>
+        <h2>{{ $t("Kanallar va xizmatlar") }}</h2>
+        <p>{{ $t("Namunaviy hisobni tanlang, ruxsatlarni ko‘rib chiqing va ulanishni tasdiqlang.") }}</p>
       </div>
-      <div class="integration-count"><strong>{{ connections.length }} <span>/ {{ integrationProviders.length }}</span></strong><span>Demo ulangan</span></div>
+      <div class="integration-count"><strong>{{ $t(connections.length) }} <span>/ {{ $t(integrationProviders.length) }}</span></strong><span>{{ $t("Demo ulangan") }}</span></div>
     </section>
 
     <div class="integration-grid">
-      <article v-for="{ provider, connection, resource } in cards" :key="provider.id" class="glass integration-card" :aria-label="provider.name">
+      <article v-for="{ provider, connection, resource } in cards" :key="provider.id" class="glass integration-card" :aria-label="$t(provider.name)">
         <div class="integration-card-top">
           <IntegrationMark :provider="provider" />
-          <span class="status-chip" :class="connection ? 'tone-green' : 'tone-neutral'"><i></i>{{ connection ? 'Demo ulangan' : 'Ulanmagan' }}</span>
+          <span class="status-chip" :class="connection ? 'tone-green' : 'tone-neutral'"><i></i>{{ $t(connection ? $t('Demo ulangan') : $t('Ulanmagan')) }}</span>
         </div>
         <div class="integration-card-copy">
-          <span>{{ provider.category }}</span>
-          <h3>{{ provider.name }}</h3>
-          <p>{{ provider.description }}</p>
+          <span>{{ $t(provider.category) }}</span>
+          <h3>{{ $t(provider.name) }}</h3>
+          <p>{{ $t(provider.description) }}</p>
         </div>
         <div class="integration-card-footer">
-          <div v-if="resource" class="integration-resource" :title="resource.name">
-            <Icon :name="provider.resourceIcon" :size="15" /><span>{{ resource.name }}</span>
+          <div v-if="resource" class="integration-resource" :title="$t(resource.name)">
+            <Icon :name="provider.resourceIcon" :size="15" /><span>{{ $t(resource.name) }}</span>
           </div>
-          <div v-else class="integration-resource"><Icon name="link" :size="15" /><span>{{ provider.resourceLabel }}</span></div>
+          <div v-else class="integration-resource"><Icon name="link" :size="15" /><span>{{ $t(provider.resourceLabel) }}</span></div>
           <button class="button button-compact" :class="connection ? 'button-secondary' : 'button-soft'"
-            :aria-label="provider.name + (connection ? ' ulanishini boshqarish' : ' demo ulash')" @click="active = provider">
-            {{ connection ? 'Boshqarish' : 'Demo ulash' }}<Icon name="arrowUpRight" :size="14" />
+            :aria-label="$t(provider.name + (connection ? ' ulanishini boshqarish' : ' demo ulash'))" @click="active = provider">
+            {{ $t(connection ? $t('Boshqarish') : $t('Demo ulash')) }}<Icon name="arrowUpRight" :size="14" />
           </button>
         </div>
       </article>

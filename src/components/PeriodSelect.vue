@@ -8,8 +8,8 @@ defineEmits(['update:modelValue'])
 <template>
   <label class="period-select">
     <Icon name="calendar" :size="17" />
-    <select :value="modelValue" aria-label="Hisobot davri" @change="$emit('update:modelValue', Number($event.target.value))">
-      <option v-for="days in periods" :key="days" :value="days">So‘nggi {{ days }} kun</option>
+    <select :value="modelValue" :aria-label='$t("Hisobot davri")' @change="$emit('update:modelValue', Number($event.target.value))">
+      <option v-for="days in periods" :key="days" :value="days">{{ $t("So‘nggi") }} {{ $t(days) }} {{ $t("kun") }}</option>
     </select>
     <Icon name="chevronDown" :size="13" class="select-chevron" />
   </label>

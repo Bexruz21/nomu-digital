@@ -7,7 +7,7 @@ defineProps({ provider: { type: Object, required: true } })
 <template>
   <span class="provider-mark icon-tile" :class="'tone-' + provider.color" aria-hidden="true">
     <Icon v-if="provider.icon" :name="provider.icon" :size="22" />
-    <span v-else>{{ provider.mark }}</span>
+    <span v-else>{{ $t(provider.mark) }}</span>
   </span>
 </template>
 

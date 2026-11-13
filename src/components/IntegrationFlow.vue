@@ -5,6 +5,7 @@ import { integrationAccounts, integrationResources } from '../integrations.js'
 import Dialog from './Dialog.vue'
 import Icon from './Icon.vue'
 import IntegrationMark from './IntegrationMark.vue'
+import { localeTag, tr } from '../i18n.js'
 
 const props = defineProps({ provider: { type: Object, required: true }, connection: Object })
 const emit = defineEmits(['connect', 'disconnect', 'close'])
@@ -30,7 +31,7 @@ const selected = computed(() => {
   }
 })
 const connectionTime = computed(() => props.connection?.connectedAt
-  ? new Intl.DateTimeFormat('uz-UZ', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(props.connection.connectedAt))
+  ? new Intl.DateTimeFormat(localeTag(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(props.connection.connectedAt))
   : 'Oldindan ulangan demo')
 
 watch(stage, async () => {
@@ -54,109 +55,109 @@ function disconnect() {
 </script>
 
 <template>
-  <Dialog wide :title="provider.name" subtitle="Demo ulanish" @close="emit('close')">
+  <Dialog wide :title="$t(provider.name)" :subtitle='$t("Demo ulanish")' @close="emit('close')">
     <div class="dialog-body integration-flow">
       <div class="flow-provider">
         <IntegrationMark :provider="provider" />
-        <div><strong>{{ provider.name }} ↔ {{ brandName }}</strong><span>{{ provider.category }} · Namunaviy ulanish</span></div>
-        <span class="status-chip tone-purple"><i></i>Demo</span>
+        <div><strong>{{ $t(provider.name) }} ↔ {{ $t(brandName) }}</strong><span>{{ $t(provider.category) }} {{ $t("· Namunaviy ulanish") }}</span></div>
+        <span class="status-chip tone-purple"><i></i>{{ $t("Demo") }}</span>
       </div>
 
-      <ol v-if="activeStep !== -1" class="flow-steps" aria-label="Ulanish bosqichlari">
+      <ol v-if="activeStep !== -1" class="flow-steps" :aria-label='$t("Ulanish bosqichlari")'>
         <li v-for="(step, index) in steps" :key="step.id" :class="{ 'is-current': index === activeStep, 'is-complete': index < activeStep }"
           :aria-current="index === activeStep ? 'step' : undefined">
-          <span><Icon v-if="index < activeStep" name="check" :size="13" /><template v-else>{{ index + 1 }}</template></span>{{ step.label }}
+          <span><Icon v-if="index < activeStep" name="check" :size="13" /><template v-else>{{ $t(index + 1) }}</template></span>{{ $t(step.label) }}
         </li>
       </ol>
 
       <template v-if="stage === 'account'">
         <div class="flow-heading">
-          <h3 ref="stageTitle" tabindex="-1">{{ isTelegram ? 'Demo botni tanlang' : 'Demo hisobni tanlang' }}</h3>
-          <p>{{ isTelegram ? 'Ulanishda kanalga biriktiriladigan botni tanlang.' : provider.platform + ' orqali davom etish uchun namunaviy hisobni tanlang.' }}</p>
+          <h3 ref="stageTitle" tabindex="-1">{{ $t(isTelegram ? $t('Demo botni tanlang') : $t('Demo hisobni tanlang')) }}</h3>
+          <p>{{ isTelegram ? $t('Ulanishda kanalga biriktiriladigan botni tanlang.') : tr('{platform} orqali davom etish uchun demo hisob tanlang.','Выберите демо-аккаунт, чтобы продолжить через {platform}.','Choose a demo account to continue with {platform}.',{platform:provider.platform}) }}</p>
         </div>
-        <fieldset class="flow-options" :aria-label="isTelegram ? 'Demo botlar' : 'Demo hisoblar'">
+        <fieldset class="flow-options" :aria-label="$t(isTelegram ? $t('Demo botlar') : $t('Demo hisoblar'))">
           <label v-for="account in accounts" :key="account.id" class="flow-option" :class="{ selected: accountId === account.id }">
-            <span class="icon-tile tone-neutral">{{ account.initials }}</span>
-            <span><strong>{{ account.name }}</strong><small>{{ account.detail }}</small></span>
+            <span class="icon-tile tone-neutral">{{ $t(account.initials) }}</span>
+            <span><strong>{{ $t(account.name) }}</strong><small>{{ $t(account.detail) }}</small></span>
             <input v-model="accountId" type="radio" name="integration-account" :value="account.id" @change="resourceId = ''" />
           </label>
         </fieldset>
         <div class="dialog-actions">
-          <button class="button button-secondary" @click="emit('close')">Bekor qilish</button>
-          <button class="button button-primary" :disabled="!accountId" @click="stage = 'resource'">Davom etish<Icon name="arrowRight" :size="16" /></button>
+          <button class="button button-secondary" @click="emit('close')">{{ $t("Bekor qilish") }}</button>
+          <button class="button button-primary" :disabled="!accountId" @click="stage = 'resource'">{{ $t("Davom etish") }}<Icon name="arrowRight" :size="16" /></button>
         </div>
       </template>
 
       <template v-else-if="stage === 'resource'">
         <div class="flow-heading">
-          <h3 ref="stageTitle" tabindex="-1">Ulanadigan resursni tanlang</h3>
-          <p>{{ selected.account?.name }} uchun mavjud demo resurslari.</p>
+          <h3 ref="stageTitle" tabindex="-1">{{ $t("Ulanadigan resursni tanlang") }}</h3>
+          <p>{{ $t(selected.account?.name) }} {{ $t("uchun mavjud demo resurslari.") }}</p>
         </div>
-        <fieldset class="flow-options" :aria-label="provider.resourceLabel">
+        <fieldset class="flow-options" :aria-label="$t(provider.resourceLabel)">
           <label v-for="resource in resources" :key="resource.id" class="flow-option" :class="{ selected: resourceId === resource.id }">
             <span class="icon-tile" :class="'tone-' + provider.color"><Icon :name="provider.resourceIcon" :size="18" /></span>
-            <span><strong>{{ resource.name }}</strong><small>{{ provider.resourceLabel }} · {{ resource.code }}</small></span>
+            <span><strong>{{ $t(resource.name) }}</strong><small>{{ $t(provider.resourceLabel) }} · {{ $t(resource.code) }}</small></span>
             <input v-model="resourceId" type="radio" name="integration-resource" :value="resource.id" />
           </label>
         </fieldset>
         <div class="dialog-actions">
-          <button class="button button-secondary" @click="stage = 'account'"><Icon name="chevronLeft" :size="16" />Ortga</button>
-          <button class="button button-primary" :disabled="!resourceId" @click="stage = 'consent'">Ruxsatlarni ko‘rish<Icon name="arrowRight" :size="16" /></button>
+          <button class="button button-secondary" @click="stage = 'account'"><Icon name="chevronLeft" :size="16" />{{ $t("Ortga") }}</button>
+          <button class="button button-primary" :disabled="!resourceId" @click="stage = 'consent'">{{ $t("Ruxsatlarni ko‘rish") }}<Icon name="arrowRight" :size="16" /></button>
         </div>
       </template>
 
       <template v-else-if="stage === 'consent'">
         <div class="flow-heading">
-          <h3 ref="stageTitle" tabindex="-1">Ruxsatlarni ko‘rib chiqing</h3>
-          <p>{{ selected.resource?.name }} · {{ selected.account?.name }}</p>
+          <h3 ref="stageTitle" tabindex="-1">{{ $t("Ruxsatlarni ko‘rib chiqing") }}</h3>
+          <p>{{ $t(selected.resource?.name) }} · {{ $t(selected.account?.name) }}</p>
         </div>
         <ul class="flow-permissions">
           <li v-for="permission in provider.permissions" :key="permission.title">
             <span class="icon-tile tone-purple"><Icon name="shield" :size="17" /></span>
-            <span><strong>{{ permission.title }}</strong><small>{{ permission.detail }}</small></span>
+            <span><strong>{{ $t(permission.title) }}</strong><small>{{ $t(permission.detail) }}</small></span>
           </li>
         </ul>
-        <p class="flow-note"><Icon name="info" :size="16" /> Bu ekranda namunaviy ruxsatlar tasdiqlanadi.</p>
+        <p class="flow-note"><Icon name="info" :size="16" /> {{ $t("Bu ekranda namunaviy ruxsatlar tasdiqlanadi.") }}</p>
         <div class="dialog-actions">
-          <button class="button button-secondary" @click="stage = 'resource'"><Icon name="chevronLeft" :size="16" />Ortga</button>
-          <button class="button button-primary" @click="confirmConnection"><Icon name="check" :size="17" />Tasdiqlash va ulash</button>
+          <button class="button button-secondary" @click="stage = 'resource'"><Icon name="chevronLeft" :size="16" />{{ $t("Ortga") }}</button>
+          <button class="button button-primary" @click="confirmConnection"><Icon name="check" :size="17" />{{ $t("Tasdiqlash va ulash") }}</button>
         </div>
       </template>
 
       <template v-else-if="stage === 'success'">
         <div class="flow-success">
           <span class="icon-tile tone-green"><Icon name="check" :size="26" /></span>
-          <h3 ref="stageTitle" tabindex="-1">Demo ulanish tayyor</h3>
-          <p>{{ selected.resource?.name }} integratsiyalar ro‘yxatiga qo‘shildi.</p>
+          <h3 ref="stageTitle" tabindex="-1">{{ $t("Demo ulanish tayyor") }}</h3>
+          <p>{{ $t(selected.resource?.name) }} {{ $t("integratsiyalar ro‘yxatiga qo‘shildi.") }}</p>
         </div>
-        <div class="dialog-actions"><button class="button button-primary" @click="emit('close')">Tayyor</button></div>
+        <div class="dialog-actions"><button class="button button-primary" @click="emit('close')">{{ $t("Tayyor") }}</button></div>
       </template>
 
       <template v-else-if="stage === 'details'">
         <div class="flow-heading flow-details-heading">
-          <h3 ref="stageTitle" tabindex="-1">Ulanish tafsilotlari</h3>
-          <span class="status-chip tone-green"><i></i>Demo ulangan</span>
+          <h3 ref="stageTitle" tabindex="-1">{{ $t("Ulanish tafsilotlari") }}</h3>
+          <span class="status-chip tone-green"><i></i>{{ $t("Demo ulangan") }}</span>
         </div>
         <dl class="flow-details">
-          <div><dt>{{ isTelegram ? 'Bot' : 'Hisob' }}</dt><dd>{{ selected.account?.name }} <small>{{ selected.account?.detail }}</small></dd></div>
-          <div><dt>{{ provider.resourceLabel }}</dt><dd>{{ selected.resource?.name }} <small>{{ selected.resource?.code }}</small></dd></div>
-          <div><dt>Ulangan vaqt</dt><dd>{{ connectionTime }}</dd></div>
-          <div><dt>Demo ruxsatlari</dt><dd>{{ provider.permissions.map((item) => item.title).join(', ') }}</dd></div>
+          <div><dt>{{ $t(isTelegram ? $t('Bot') : $t('Hisob')) }}</dt><dd>{{ $t(selected.account?.name) }} <small>{{ $t(selected.account?.detail) }}</small></dd></div>
+          <div><dt>{{ $t(provider.resourceLabel) }}</dt><dd>{{ $t(selected.resource?.name) }} <small>{{ $t(selected.resource?.code) }}</small></dd></div>
+          <div><dt>{{ $t("Ulangan vaqt") }}</dt><dd>{{ $t(connectionTime) }}</dd></div>
+          <div><dt>{{ $t("Demo ruxsatlari") }}</dt><dd>{{ $t(provider.permissions.map((item) => item.title).join(', ')) }}</dd></div>
         </dl>
         <div class="dialog-actions">
-          <button class="button button-secondary danger-text" @click="stage = 'disconnect'"><Icon name="logout" :size="17" />Uzish</button>
-          <button class="button button-primary" @click="emit('close')">Yopish</button>
+          <button class="button button-secondary danger-text" @click="stage = 'disconnect'"><Icon name="logout" :size="17" />{{ $t("Uzish") }}</button>
+          <button class="button button-primary" @click="emit('close')">{{ $t("Yopish") }}</button>
         </div>
       </template>
 
       <template v-else>
         <div class="flow-heading">
-          <h3 ref="stageTitle" tabindex="-1">Demo ulanishni uzish</h3>
-          <p>{{ selected.resource?.name }} integratsiyalar ro‘yxatidan uziladi.</p>
+          <h3 ref="stageTitle" tabindex="-1">{{ $t("Demo ulanishni uzish") }}</h3>
+          <p>{{ $t(selected.resource?.name) }} {{ $t("integratsiyalar ro‘yxatidan uziladi.") }}</p>
         </div>
         <div class="dialog-actions">
-          <button class="button button-secondary" @click="stage = 'details'">Ortga</button>
-          <button class="button button-danger" @click="disconnect">Demo ulanishni uzish</button>
+          <button class="button button-secondary" @click="stage = 'details'">{{ $t("Ortga") }}</button>
+          <button class="button button-danger" @click="disconnect">{{ $t("Demo ulanishni uzish") }}</button>
         </div>
       </template>
     </div>

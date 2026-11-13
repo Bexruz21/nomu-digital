@@ -1,11 +1,13 @@
 {
   "name": "marketlane-ai",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
+    "test": "node --test tests/workspace.test.js",
+    "test:browser": "node tests/browser.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
@@ -13,6 +15,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
+    "playwright": "^1.62.1",
     "vite": "^7.2.2"
   }
 }

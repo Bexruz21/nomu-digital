@@ -14,10 +14,10 @@ const tabs = [
 <template>
   <div class="page-stack">
     <header class="page-heading">
-      <div><div class="eyebrow"><i></i> BOSHQARUV</div><h1>Sozlamalar</h1><p>Biznes ma’lumotlari va ulangan xizmatlarni boshqaring.</p></div>
+      <div><div class="eyebrow"><i></i> {{ $t("BOSHQARUV") }}</div><h1>{{ $t("Sozlamalar") }}</h1><p>{{ $t("Biznes ma’lumotlari va ulangan xizmatlarni boshqaring.") }}</p></div>
     </header>
-    <div class="settings-tabs segmented" aria-label="Sozlamalar bo‘limi">
-      <button v-for="item in tabs" :key="item.id" :aria-pressed="tab === item.id" @click="emit('tab', item.id)"><Icon :name="item.icon" :size="16" />{{ item.label }}</button>
+    <div class="settings-tabs segmented" :aria-label='$t("Sozlamalar bo‘limi")'>
+      <button v-for="item in tabs" :key="item.id" :aria-pressed="tab === item.id" @click="emit('tab', item.id)"><Icon :name="item.icon" :size="16" />{{ $t(item.label) }}</button>
     </div>
     <BusinessProfile v-show="tab === 'profile'" :profile="state.profile" @save="emit('save', $event)" />
     <IntegrationCatalog v-if="tab === 'integrations'" :connections="state.connections"
